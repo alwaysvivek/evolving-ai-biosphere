@@ -1,6 +1,5 @@
 # evolving-ai-biosphere
 A living digital world where AI organisms evolve and adapt through memory, learning, and survival.
-# AI Ecosphere - Predator Hive LSTM
 
 ## Complete Documentation
 
