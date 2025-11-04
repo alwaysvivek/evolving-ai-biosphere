@@ -5,28 +5,29 @@
 
 ## 📚 Table of Contents
 1. [🧠 Overview](#-overview)  
-2. [🧬 Species Overview](#-species-overview)  
+2. [🖼️ Demo Snapshot](#-demo-snapshot)  
+3. [🧬 Species Overview](#-species-overview)  
    - [🌱 Plants (Green)](#-plants-green)  
    - [🐇 Herbivores (Blue)](#-herbivores-blue)  
    - [🦊 Predators (Red)](#-predators-red)  
-3. [🌦️ Environment Dynamics](#️-environment-dynamics)  
-4. [⚙️ Energy Flow](#️-energy-flow)  
-5. [🧪 Scent Diffusion System](#-scent-diffusion-system)  
-6. [🧭 Emergent Phenomena](#-emergent-phenomena)  
-7. [🧬 Reproduction & Inheritance](#-reproduction--inheritance)  
-8. [💀 Death & Decay](#-death--decay)  
-9. [🕹️ Interactive Controls](#️-interactive-controls)  
-10. [🎨 Visual Feedback](#-visual-feedback)  
-11. [📊 Long-Term Dynamics](#-long-term-dynamics)  
-12. [⚙️ Installation & Setup](#️-installation--setup)  
-13. [▶️ Running the Simulation](#️-running-the-simulation)  
-14. [🌋 Test Ecosystem Resilience](#-test-ecosystem-resilience)  
-15. [🧠 Study Hive Learning](#-study-hive-learning)  
-16. [🧩 Custom Scenarios](#-custom-scenarios)  
-17. [📈 Reporting](#-reporting)  
-18. [🌍 Summary](#-summary)
+4. [🌦️ Environment Dynamics](#️-environment-dynamics)  
+5. [⚙️ Energy Flow](#️-energy-flow)  
+6. [🧪 Scent Diffusion System](#-scent-diffusion-system)  
+7. [🧭 Emergent Phenomena](#-emergent-phenomena)  
+8. [🧬 Reproduction & Inheritance](#-reproduction--inheritance)  
+9. [💀 Death & Decay](#-death--decay)  
+10. [🕹️ Interactive Controls](#️-interactive-controls)  
+11. [🎨 Visual Feedback](#-visual-feedback)  
+12. [📊 Long-Term Dynamics](#-long-term-dynamics)  
+13. [⚙️ Installation & Setup](#️-installation--setup)  
+14. [▶️ Running the Simulation](#️-running-the-simulation)  
+15. [🌋 Test Ecosystem Resilience](#-test-ecosystem-resilience)  
+16. [🧠 Study Hive Learning](#-study-hive-learning)  
+17. [🧩 Custom Scenarios](#-custom-scenarios)  
+18. [📈 Reporting](#-reporting)  
+19. [🌍 Summary](#-summary)
 
---- 
+---
 
 ## 🧠 Overview
 
