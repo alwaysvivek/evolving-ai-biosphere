@@ -1,0 +1,541 @@
+pygame 2.6.1 (SDL 2.28.4, Python 3.9.6)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+AI ECOSPHERE — Predator Hive LSTM
+Controls printed in terminal on startup.
+
+
+=== Controls (keyboard) ===
+SPACE - Play/Pause
+F     - Spawn flower pattern
+S     - Spawn spiral galaxy
+O     - Spawn predator swarm
+N     - Spawn nutrient field
+C     - Clear
+R     - Print report
+T     - Toggle predator training ON/OFF (training runs automatically when ON)
+E     - Trigger scarcity event
+K     - Kill predators
+L     - Kill herbivores
+P     - Kill plants
+Q     - Quit
+==========================
+
+
+============================================================
+Generation 20 REPORT
+Population: 113 | Dominant: Predators
+Plants: 21 | Herbivores: 29 | Predators: 41
+Temperature: 0.46 | Light: 0.80
+Diversity score: 0.937
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 40 REPORT
+Population: 136 | Dominant: Predators
+Plants: 25 | Herbivores: 31 | Predators: 47
+Temperature: 0.45 | Light: 0.76
+Diversity score: 0.924
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 60 REPORT
+Population: 128 | Dominant: Predators
+Plants: 29 | Herbivores: 23 | Predators: 31
+Temperature: 0.49 | Light: 0.79
+Diversity score: 0.900
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 80 REPORT
+Population: 96 | Dominant: Plants
+Plants: 35 | Herbivores: 3 | Predators: 13
+Temperature: 0.54 | Light: 0.81
+Diversity score: 0.680
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 100 REPORT
+Population: 101 | Dominant: Plants
+Plants: 40 | Herbivores: 2 | Predators: 3
+Temperature: 0.65 | Light: 0.76
+Diversity score: 0.500
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 120 REPORT
+Population: 107 | Dominant: Plants
+Plants: 49 | Herbivores: 2 | Predators: 0
+Temperature: 0.59 | Light: 0.87
+Diversity score: 0.393
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 140 REPORT
+Population: 114 | Dominant: Plants
+Plants: 56 | Herbivores: 2 | Predators: 0
+Temperature: 0.56 | Light: 0.80
+Diversity score: 0.382
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 160 REPORT
+Population: 121 | Dominant: Plants
+Plants: 63 | Herbivores: 2 | Predators: 0
+Temperature: 0.54 | Light: 0.81
+Diversity score: 0.371
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 180 REPORT
+Population: 140 | Dominant: Plants
+Plants: 74 | Herbivores: 2 | Predators: 0
+Temperature: 0.49 | Light: 0.76
+Diversity score: 0.362
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 200 REPORT
+Population: 148 | Dominant: Plants
+Plants: 82 | Herbivores: 2 | Predators: 0
+Temperature: 0.52 | Light: 0.71
+Diversity score: 0.351
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 220 REPORT
+Population: 154 | Dominant: Plants
+Plants: 88 | Herbivores: 2 | Predators: 0
+Temperature: 0.49 | Light: 0.73
+Diversity score: 0.342
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 240 REPORT
+Population: 161 | Dominant: Plants
+Plants: 95 | Herbivores: 2 | Predators: 0
+Temperature: 0.45 | Light: 0.69
+Diversity score: 0.333
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 260 REPORT
+Population: 169 | Dominant: Plants
+Plants: 103 | Herbivores: 2 | Predators: 0
+Temperature: 0.43 | Light: 0.62
+Diversity score: 0.322
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 280 REPORT
+Population: 174 | Dominant: Plants
+Plants: 108 | Herbivores: 2 | Predators: 0
+Temperature: 0.43 | Light: 0.58
+Diversity score: 0.316
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 300 REPORT
+Population: 187 | Dominant: Plants
+Plants: 112 | Herbivores: 2 | Predators: 0
+Temperature: 0.51 | Light: 0.52
+Diversity score: 0.324
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 320 REPORT
+Population: 217 | Dominant: Plants
+Plants: 120 | Herbivores: 2 | Predators: 0
+Temperature: 0.54 | Light: 0.50
+Diversity score: 0.338
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 340 REPORT
+Population: 233 | Dominant: Plants
+Plants: 125 | Herbivores: 2 | Predators: 0
+Temperature: 0.55 | Light: 0.42
+Diversity score: 0.341
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 360 REPORT
+Population: 214 | Dominant: Plants
+Plants: 128 | Herbivores: 2 | Predators: 0
+Temperature: 0.57 | Light: 0.39
+Diversity score: 0.320
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 380 REPORT
+Population: 199 | Dominant: Plants
+Plants: 124 | Herbivores: 2 | Predators: 0
+Temperature: 0.51 | Light: 0.44
+Diversity score: 0.310
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 400 REPORT
+Population: 200 | Dominant: Plants
+Plants: 137 | Herbivores: 2 | Predators: 0
+Temperature: 0.47 | Light: 0.49
+Diversity score: 0.278
+Hive experiences stored: 0
+============================================================
+
+**🌱 Herbivores Reintroduced at Gen 406**
+
+============================================================
+Generation 420 REPORT
+Population: 217 | Dominant: Plants
+Plants: 151 | Herbivores: 5 | Predators: 0
+Temperature: 0.43 | Light: 0.58
+Diversity score: 0.309
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 440 REPORT
+Population: 241 | Dominant: Plants
+Plants: 165 | Herbivores: 5 | Predators: 0
+Temperature: 0.52 | Light: 0.58
+Diversity score: 0.309
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 460 REPORT
+Population: 236 | Dominant: Plants
+Plants: 175 | Herbivores: 1 | Predators: 0
+Temperature: 0.57 | Light: 0.62
+Diversity score: 0.223
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 480 REPORT
+Population: 240 | Dominant: Plants
+Plants: 180 | Herbivores: 0 | Predators: 0
+Temperature: 0.57 | Light: 0.74
+Diversity score: 0.196
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 500 REPORT
+Population: 253 | Dominant: Plants
+Plants: 193 | Herbivores: 0 | Predators: 0
+Temperature: 0.58 | Light: 0.65
+Diversity score: 0.188
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 520 REPORT
+Population: 261 | Dominant: Plants
+Plants: 209 | Herbivores: 0 | Predators: 0
+Temperature: 0.62 | Light: 0.65
+Diversity score: 0.162
+Hive experiences stored: 0
+============================================================
+
+**🌱 Herbivores Reintroduced at Gen 523**
+**🌱 Herbivores Reintroduced at Gen 528**
+
+============================================================
+Generation 540 REPORT
+Population: 263 | Dominant: Plants
+Plants: 210 | Herbivores: 1 | Predators: 0
+Temperature: 0.63 | Light: 0.57
+Diversity score: 0.183
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 560 REPORT
+Population: 277 | Dominant: Plants
+Plants: 213 | Herbivores: 1 | Predators: 0
+Temperature: 0.64 | Light: 0.42
+Diversity score: 0.202
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 580 REPORT
+Population: 275 | Dominant: Plants
+Plants: 211 | Herbivores: 1 | Predators: 0
+Temperature: 0.71 | Light: 0.47
+Diversity score: 0.204
+Hive experiences stored: 0
+============================================================
+
+**🌱 Herbivores Reintroduced at Gen 584**
+
+============================================================
+Generation 600 REPORT
+Population: 292 | Dominant: Plants
+Plants: 218 | Herbivores: 0 | Predators: 0
+Temperature: 0.76 | Light: 0.43
+Diversity score: 0.199
+Hive experiences stored: 0
+============================================================
+
+**🌱 Herbivores Reintroduced at Gen 619**
+
+============================================================
+Generation 620 REPORT
+Population: 298 | Dominant: Plants
+Plants: 222 | Herbivores: 2 | Predators: 0
+Temperature: 0.76 | Light: 0.46
+Diversity score: 0.230
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 640 REPORT
+Population: 292 | Dominant: Plants
+Plants: 225 | Herbivores: 2 | Predators: 0
+Temperature: 0.80 | Light: 0.56
+Diversity score: 0.214
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 660 REPORT
+Population: 295 | Dominant: Plants
+Plants: 230 | Herbivores: 2 | Predators: 0
+Temperature: 0.85 | Light: 0.59
+Diversity score: 0.207
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 680 REPORT
+Population: 291 | Dominant: Plants
+Plants: 247 | Herbivores: 2 | Predators: 0
+Temperature: 0.84 | Light: 0.71
+Diversity score: 0.158
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 700 REPORT
+Population: 310 | Dominant: Plants
+Plants: 256 | Herbivores: 2 | Predators: 0
+Temperature: 0.85 | Light: 0.59
+Diversity score: 0.173
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 720 REPORT
+Population: 317 | Dominant: Plants
+Plants: 252 | Herbivores: 2 | Predators: 0
+Temperature: 0.90 | Light: 0.47
+Diversity score: 0.195
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 740 REPORT
+Population: 311 | Dominant: Plants
+Plants: 246 | Herbivores: 2 | Predators: 0
+Temperature: 0.92 | Light: 0.32
+Diversity score: 0.198
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 760 REPORT
+Population: 292 | Dominant: Plants
+Plants: 227 | Herbivores: 2 | Predators: 0
+Temperature: 0.87 | Light: 0.30
+Diversity score: 0.209
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 780 REPORT
+Population: 270 | Dominant: Plants
+Plants: 205 | Herbivores: 2 | Predators: 0
+Temperature: 0.84 | Light: 0.34
+Diversity score: 0.223
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 800 REPORT
+Population: 265 | Dominant: Plants
+Plants: 200 | Herbivores: 2 | Predators: 0
+Temperature: 0.86 | Light: 0.44
+Diversity score: 0.227
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 820 REPORT
+Population: 273 | Dominant: Plants
+Plants: 197 | Herbivores: 2 | Predators: 0
+Temperature: 0.92 | Light: 0.50
+Diversity score: 0.247
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 840 REPORT
+Population: 267 | Dominant: Plants
+Plants: 191 | Herbivores: 2 | Predators: 0
+Temperature: 0.94 | Light: 0.48
+Diversity score: 0.251
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 860 REPORT
+Population: 260 | Dominant: Plants
+Plants: 184 | Herbivores: 2 | Predators: 0
+Temperature: 1.00 | Light: 0.46
+Diversity score: 0.257
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 880 REPORT
+Population: 243 | Dominant: Plants
+Plants: 167 | Herbivores: 2 | Predators: 0
+Temperature: 0.96 | Light: 0.47
+Diversity score: 0.271
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 900 REPORT
+Population: 237 | Dominant: Plants
+Plants: 161 | Herbivores: 2 | Predators: 0
+Temperature: 0.94 | Light: 0.46
+Diversity score: 0.276
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 920 REPORT
+Population: 221 | Dominant: Plants
+Plants: 156 | Herbivores: 2 | Predators: 0
+Temperature: 0.94 | Light: 0.47
+Diversity score: 0.263
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 940 REPORT
+Population: 204 | Dominant: Plants
+Plants: 150 | Herbivores: 2 | Predators: 0
+Temperature: 0.99 | Light: 0.60
+Diversity score: 0.247
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 960 REPORT
+Population: 211 | Dominant: Plants
+Plants: 157 | Herbivores: 2 | Predators: 0
+Temperature: 0.89 | Light: 0.61
+Diversity score: 0.240
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 980 REPORT
+Population: 228 | Dominant: Plants
+Plants: 174 | Herbivores: 2 | Predators: 0
+Temperature: 0.88 | Light: 0.79
+Diversity score: 0.226
+Hive experiences stored: 0
+============================================================
+
+
+============================================================
+Generation 1000 REPORT
+Population: 243 | Dominant: Plants
+Plants: 178 | Herbivores: 2 | Predators: 0
+Temperature: 0.95 | Light: 0.84
+Diversity score: 0.244
+Hive experiences stored: 0
+============================================================
+
+➡️ Quit requested.
+
+============================================================
+Generation 1012 REPORT
+Population: 244 | Dominant: Plants
+Plants: 189 | Herbivores: 2 | Predators: 0
+Temperature: 0.97 | Light: 0.88
+Diversity score: 0.216
+Hive experiences stored: 0
+============================================================
+
+
+Process finished with exit code 0
