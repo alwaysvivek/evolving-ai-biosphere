@@ -42,6 +42,25 @@ Basically, how it all comes together — visit the full docs at
 
 ---
 
+## 🖼️ Demo Snapshot
+
+Generation 100 — stabilized biosphere (plant dominance phase):
+
+<p align="center">
+  <img src="logs/sample-output-gen-100.jpeg" alt="Generation 100 Snapshot" width="60%">
+</p>
+
+> **Description:**  
+> A dynamic view of the AI Ecosphere at Generation 100. The dark, textured terrain is populated by three species: **Plants (Green)**, **Predators (Red)**, and sparse **Herbivores (Blue)**, alongside **Nutrient Deposits (Yellow)**.  
+> Notice the emergence of distinct territories: a dense central *Plant Forest* protected by clustered, actively hunting predators, and areas of high *Plant Scent* (green halos) indicating concentrated resources.  
+> The top-left overlay confirms the critical environmental balance: a **high population (277)** but a **low, yet stable, Diversity Score (0.71)**.
+
+
+📄 **View raw simulation log:**  
+[logs/sample_output.txt](logs/sample_output.txt)
+
+---
+
 ## 🧬 Species Overview
 
 ### 🌱 **Plants (Green)**
