@@ -36,6 +36,10 @@ Unlike static simulations, organisms here use **neural networks** and **reinforc
 
 > A digital petri dish where **machine learning meets natural selection**.
 
+🧩 **Technical Documentation:**  
+Basically, how it all comes together — visit the full docs at  
+👉 [https://alwaysvivek.github.io/evolving-ai-biosphere/](https://alwaysvivek.github.io/evolving-ai-biosphere/)
+
 ---
 
 ## 🧬 Species Overview
