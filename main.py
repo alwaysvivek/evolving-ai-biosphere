@@ -11,6 +11,17 @@ from collections import defaultdict, deque
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import threading
+import queue
+from typing import TypedDict, Annotated, List, Literal
+from langgraph.graph import StateGraph, START, END
+from langchain_ollama import OllamaLLM, ChatOllama
+from langchain_core.tools import tool
+from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
+from langchain_core.pydantic_v1 import BaseModel, Field
+import uuid
+import datetime
+import re
 
 
 # ------- Utilities -------
@@ -212,6 +223,302 @@ class QAgent:
         return na
 
 
+
+# -----------------------------
+# LangGraph Commentary Agent
+# -----------------------------
+class SimState(TypedDict):
+    generation: int
+    stats: str
+    commentary: str
+
+class CommentaryAgent:
+    def __init__(self):
+        try:
+            self.llm = OllamaLLM(model="llama3.2")
+            print("[CommentaryAgent] Connected to Ollama (llama3.2)")
+        except Exception:
+            self.llm = None
+            print("[CommentaryAgent] Could not connect to Ollama. Ensure it is running.")
+
+        builder = StateGraph(SimState)
+        builder.add_node("commentator", self.generate_commentary)
+        builder.add_edge(START, "commentator")
+        builder.add_edge("commentator", END)
+        self.graph = builder.compile()
+
+    def generate_commentary(self, state: SimState):
+        if not self.llm:
+            return {"commentary": "Ollama not available. (Check if running)"}
+        
+        prompt = (f"You are a nature documentary narrator observing an artificial life simulation. "
+                  f"Current Generation: {state['generation']}. "
+                  f"Ecosystem Stats: {state['stats']}. "
+                  f"Provide a 1-sentence dramatic, scientific, or philosophical commentary on the current state of the ecosystem. "
+                  f"Focus on the balance between predators, herbivores, and plants.")
+        try:
+            response = self.llm.invoke(prompt)
+            # clean up newlines
+            response = response.replace("\n", " ")
+        except Exception as e:
+            response = f"Commentary error: {str(e)}"
+        
+        return {"commentary": response}
+
+
+    def invoke(self, generation, stats_str):
+        return self.graph.invoke({"generation": generation, "stats": stats_str, "commentary": ""})
+
+
+# -----------------------------
+# History & Forensics
+# -----------------------------
+class EventLogger:
+    def __init__(self, max_history=1000):
+        self.history = deque(maxlen=max_history)
+        self.significant_events = [] # Persist significant events (extinctions) forever
+
+    def log(self, gen, event_type, details):
+        entry = {
+            "gen": gen,
+            "type": event_type,
+            "details": details,
+            "timestamp": datetime.datetime.now().strftime("%H:%M:%S")
+        }
+        self.history.append(entry)
+        
+        # Check for significance
+        if "LAST_SURVIVOR" in details.get("tags", []):
+            self.significant_events.append(entry)
+            print(f"*** SIGNIFICANT EVENT: {event_type} - {details} ***")
+
+GLOBAL_EVENT_LOGGER = EventLogger()
+
+
+
+
+
+
+
+# -----------------------------
+# God Mode (Tool Calling)
+# -----------------------------
+# We define tools that will be bound to the LLM.
+
+GOD_MODE_QUEUE = queue.Queue()
+
+
+
+
+
+@tool
+def consult_history(query: str):
+    """Query the simulation history. Use this to answer questions about 'who died', 'when', 'extinction', etc.
+    query: Natural language query or keyword (e.g., 'predator extinction', 'last death', 'cause of death').
+    """
+    # Simple keyword search implementation
+    hits = []
+    q_lower = query.lower()
+    
+    # helper to format entry
+    def fmt(e):
+        return f"[Gen {e['gen']}] {e['type']}: {e['details']}"
+
+    # Search significant first
+    for e in GLOBAL_EVENT_LOGGER.significant_events:
+        if any(w in str(e).lower() for w in q_lower.split()):
+            hits.append(fmt(e))
+            
+    # Search recent history
+    for e in reversed(GLOBAL_EVENT_LOGGER.history):
+        if len(hits) > 5: break
+        if any(w in str(e).lower() for w in q_lower.split()):
+            hits.append(fmt(e))
+            
+    # Generic fallback if no specific keywords found but query asks for "recent"
+    if not hits and "recent" in q_lower:
+        for e in list(GLOBAL_EVENT_LOGGER.history)[-5:]:
+            hits.append(fmt(e))
+            
+    if not hits:
+        return "No specific history records found matching that query. (Found 0)"
+    
+    return "History Records:\n" + "\n".join(hits)
+
+@tool
+def spawn_creatures(species: str, count: int):
+    """Spawn a specific number of creatures of a given species.
+    species: One of 'plant', 'herbivore', 'predator'.
+    count: Number to spawn (1-50).
+    """
+    GOD_MODE_QUEUE.put(("spawn", species, count))
+    return f"Queued spawn: {count} {species}"
+
+@tool
+def change_environment(temp_delta: float, light_delta: float):
+    """Change global temperature or light.
+    temp_delta: Change in temperature (-0.5 to 0.5). Negative is colder.
+    light_delta: Change in light (-0.5 to 0.5). Negative is darker.
+    """
+    GOD_MODE_QUEUE.put(("env", temp_delta, light_delta))
+    return f"Queued env change: T{temp_delta:+.2f}, L{light_delta:+.2f}"
+
+@tool
+def cull_species(species: str, percentage: float):
+    """Kill a percentage of a species.
+    species: One of 'plant', 'herbivore', 'predator'.
+    percentage: 0.0 to 1.0 (e.g., 0.5 removes half).
+    """
+    GOD_MODE_QUEUE.put(("cull", species, percentage))
+    return f"Queued cull: {percentage*100}% of {species}"
+
+# -----------------------------
+# Multi-Agent Council
+# -----------------------------
+class CouncilState(TypedDict):
+    stats: str
+    gaia_proposal: str
+    entropy_critique: str
+    final_decision: str
+    messages: List[str]
+
+class CouncilSystem:
+    def __init__(self):
+        self.llm = OllamaLLM(model="llama3.2")
+        self.arbiter_llm = ChatOllama(model="llama3.2", temperature=0) # Arbiter needs tools
+        
+        # Tools for Arbiter
+        self.tools = [spawn_creatures, change_environment, cull_species]
+        self.arbiter_llm_with_tools = self.arbiter_llm.bind_tools(self.tools)
+
+        # Build Graph
+        builder = StateGraph(CouncilState)
+        builder.add_node("gaia", self.node_gaia)
+        builder.add_node("entropy", self.node_entropy)
+        builder.add_node("arbiter", self.node_arbiter)
+        
+        builder.add_edge(START, "gaia")
+        builder.add_edge("gaia", "entropy")
+        builder.add_edge("entropy", "arbiter")
+        builder.add_edge("arbiter", END)
+        
+        self.graph = builder.compile()
+        print("[Council] Graph compiled.")
+
+    def node_gaia(self, state: CouncilState):
+        prompt = f"Role: Gaia (Life/Growth). Stats: {state['stats']}. Propose an intervention to help life flourish. Be brief."
+        res = self.llm.invoke(prompt)
+        return {"gaia_proposal": res, "messages": [f"Gaia: {res}"]}
+
+    def node_entropy(self, state: CouncilState):
+        prompt = f"Role: Entropy (Death/Balance). Proposal: {state['gaia_proposal']}. Critique this. Is it too safe? Should we add chaos? Be brief."
+        res = self.llm.invoke(prompt)
+        return {"entropy_critique": res, "messages": [f"Entropy: {res}"]}
+
+    def node_arbiter(self, state: CouncilState):
+        # Arbiter takes previous args and calls a tool if needed
+        prompt = [
+            SystemMessage(f"Role: Arbiter. Weigh Gaia ({state['gaia_proposal']}) and Entropy ({state['entropy_critique']}). Decide on the single best action."),
+            HumanMessage("Execute the decision using a tool, or reply 'No Action' if none needed.")
+        ]
+        res = self.arbiter_llm_with_tools.invoke(prompt)
+        
+        # execute if tool call
+        decision_text = res.content
+        if res.tool_calls:
+            results = []
+            for tool_call in res.tool_calls:
+                func_name = tool_call["name"]
+                args = tool_call["args"]
+                if func_name == "spawn_creatures": s_res = spawn_creatures.invoke(args)
+                elif func_name == "change_environment": s_res = change_environment.invoke(args)
+                elif func_name == "cull_species": s_res = cull_species.invoke(args)
+                else: s_res = "Unknown"
+                results.append(s_res)
+            decision_text = "ACTION: " + "; ".join(results)
+            
+        return {"final_decision": decision_text, "messages": [f"Arbiter: {decision_text}"]}
+
+    def invoke(self, stats_str):
+        return self.graph.invoke({"stats": stats_str, "messages": []})
+
+GLOBAL_COUNCIL = CouncilSystem()
+
+@tool
+def summon_council(query: str):
+    """Summon the Multi-Agent Council (Gaia, Entropy, Arbiter) to debate and decide on an ecosystem intervention.
+    Use this when the user asks for 'council', 'debate', 'autonomy', or 'help me decide'.
+    query: Optional topic for the council to focus on (can be empty).
+    """
+    # Grab current stats (using global hack or assuming GodModeAgent passes it? 
+    # GodModeAgent doesn't inherently have stats. We'll use a placeholder or read from Sim if possible.
+    # ideally we pass stats in query or have a way to access SIM.
+    # For now, we'll let main loop update a global STATS variable? Or just generic debate.
+    # Let's assume the AGENT prompt included stats, or we just ask general advice.
+    
+    res = GLOBAL_COUNCIL.invoke("Current Ecosystem Status: Unknown (User requested intervention)")
+    # Format the debate
+    log = "\n".join(res["messages"])
+    return f"--- Council Debate ---\n{log}\n----------------------"
+
+class GodModeAgent:
+    def __init__(self):
+        try:
+            # function calling usually requires the chat model
+            self.llm = ChatOllama(model="llama3.2", temperature=0)
+            self.tools = [spawn_creatures, change_environment, cull_species, consult_history, summon_council]
+            self.llm_with_tools = self.llm.bind_tools(self.tools)
+            print("[GodMode] Connected to Ollama (llama3.2) with tools.")
+        except Exception:
+            self.llm = None
+            print("[GodMode] Failed to connect.")
+
+    def process_command(self, user_text: str):
+        if not self.llm: return "God Mode offline."
+        
+        # Updated system prompt to encourage chat if no tool is needed, but prioritize tools for queries
+        messages = [SystemMessage("You are an omnipotent ecosystem controller. Use 'consult_history' for events, 'summon_council' for multi-agent decisions, and tools to act. If the user just wants to chat, reply normally."), 
+                    HumanMessage(user_text)]
+        try:
+            ai_msg = self.llm_with_tools.invoke(messages)
+            # execute tools if any
+            if ai_msg.tool_calls:
+                messages.append(ai_msg) # Add the AIMessage with tool calls to history
+                
+                results = []
+                for tool_call in ai_msg.tool_calls:
+                    # We manually map to our functions 
+                    # (In a full LangGraph we'd use ToolNode, but here we just run them)
+                    func_name = tool_call["name"]
+                    args = tool_call["args"]
+                    call_id = tool_call.get("id", "call_default") # Manual tool calls might not have distinct IDs in this simple loop, but LangChain objects usually do
+                    
+                    if func_name == "spawn_creatures":
+                        res = spawn_creatures.invoke(args)
+                    elif func_name == "change_environment":
+                        res = change_environment.invoke(args)
+                    elif func_name == "cull_species":
+                        res = cull_species.invoke(args)
+                    elif func_name == "consult_history":
+                        res = consult_history.invoke(args)
+                    elif func_name == "summon_council":
+                        res = summon_council.invoke(args)
+                    else:
+                        res = "Unknown tool: " + func_name
+                    
+                    results.append(str(res))
+                    # Append ToolMessage
+                    messages.append(ToolMessage(content=str(res), tool_call_id=call_id, name=func_name))
+                
+                # Turn 2: Get final response from LLM based on tool outputs
+                final_response = self.llm_with_tools.invoke(messages)
+                return final_response.content
+            else:
+                return ai_msg.content
+        except Exception as e:
+            return f"Error: {e}"
+
+
 # -----------------------------
 # Core simulation classes
 # -----------------------------
@@ -230,7 +537,12 @@ class Cell:
         self.age = 0
         self.generation = 0
         self.draw_pos = np.array([pos[0], pos[1]], dtype=float)
-
+        self.id = uuid.uuid4().hex[:6] # Unique short ID
+        
+        # Biology: Metabolism (Gene)
+        # Default 1.0. Higher = faster movement, higher energy burn.
+        self.metabolism = 1.0 
+        
         if brain is None:
             # only plants/herbivores keep small NN; predators will use hive mostly
             if cell_type in (CellType.PLANT, CellType.HERBIVORE):
@@ -318,14 +630,18 @@ class EcoLifeSimulation:
 
     def __init__(self, width, height, tile_size, fps, device=None):
         pygame.init()
-        self.width = width;
-        self.height = height;
+        self.sidebar_width = 300
+        self.sim_width = width
+        self.sim_height = height
+        self.width = width + self.sidebar_width
+        self.height = height
+        
         self.tile_size = tile_size;
         self.fps = fps
-        self.grid_width = width // tile_size;
-        self.grid_height = height // tile_size
+        self.grid_width = self.sim_width // tile_size;
+        self.grid_height = self.sim_height // tile_size
 
-        self.screen = pygame.display.set_mode((width, height))
+        self.screen = pygame.display.set_mode((self.width, self.height))
         self.clock = pygame.time.Clock()
         pygame.display.set_caption("AI Ecosphere - Predator Hive LSTM")
 
@@ -379,7 +695,28 @@ class EcoLifeSimulation:
         self.font = pygame.font.Font(None, 24)
         self.extinction_events = []
         self.trend_history = deque(maxlen=50)
-
+        
+        # Commentary System
+        self.commentary_agent = CommentaryAgent()
+        self.commentary_queue = queue.Queue()
+        self.current_commentary = "Click 'Generate Report' to analyze..."
+        self.last_comment_gen = -1
+        # Button rect (setup here, valid after re-calc in draw or fixed pos)
+        # x will be sim_width + 15, y around 400? Let's define it dynamically in draw or init
+        self.button_rect = pygame.Rect(self.sim_width + 20, 500, self.sidebar_width - 40, 40)
+        self.is_generating = False
+        
+        # God Mode / Director
+        self.god_mode_agent = GodModeAgent()
+        
+        # Input Box
+        self.input_rect = pygame.Rect(self.sim_width + 20, 560, self.sidebar_width - 40, 32)
+        self.input_text = ""
+        self.input_active = False
+        self.input_feedback = ""
+        self.god_mode_scroll_y = 0
+        self.god_mode_content_height = 0
+        
         # Key bindings shown at start
         self.print_bindings()
 
@@ -710,11 +1047,27 @@ class EcoLifeSimulation:
             else:
                 max_age = 350  # Plant lifespan
 
+            # Determine removal cause
+            death_cause = "UNKNOWN"
+            if cell.energy <= 0: death_cause = "STARVATION"
+            elif cell.age > max_age: death_cause = "OLD_AGE"
+            
             if cell.energy <= 0 or cell.age > max_age:
                 to_remove.add(pos)
                 self.stats['total_deaths'] += 1
+                
+                # Check for significant extinction event (last 5 of species)
+                s_count = species_count[cell.type]
+                tags = []
+                if s_count <= 5:
+                    tags.append("LAST_SURVIVOR")
+                    
+                GLOBAL_EVENT_LOGGER.log(self.generation, "DEATH", 
+                                        {"id": cell.id, "type": cell.type, "cause": death_cause, "tags": tags})
+                                        
                 if cell.type == CellType.PLANT:
                     current_plant_count -= 1  # Decrement if a plant dies
+                    species_count[CellType.PLANT] -= 1 # Update local count for next iter check? (Actually this loop is over frozen keys, but useful for logs)
                 continue
 
             neighbor_info = self.get_neighbor_info(pos)
@@ -733,6 +1086,10 @@ class EcoLifeSimulation:
                         chosen = random.choice(empty)
                         # child inherits nothing from hive (hive is shared). just reproduce clone of cell brain if any.
                         child = Cell(chosen, CellType.PREDATOR)
+                        # Mutation: Metabolism
+                        mutation = random.uniform(-0.1, 0.1)
+                        child.metabolism = max(0.5, min(2.0, cell.metabolism + mutation))
+                        
                         child.generation = cell.generation + 1
                         to_add.append((chosen, child))
                         cell.energy *= 0.5
@@ -762,6 +1119,16 @@ class EcoLifeSimulation:
                             cell.energy = min(cell.energy, cell.max_energy)
                             to_remove.add(new_pos)
                             self.stats['total_deaths'] += 1
+                            
+                            # Log predation
+                            victim = self.cells[new_pos]
+                            s_count = species_count[victim.type]
+                            tags = []
+                            if s_count <= 5: tags.append("LAST_SURVIVOR") # Approximation (count is from start of frame)
+                            
+                            GLOBAL_EVENT_LOGGER.log(self.generation, "DEATH", 
+                                                    {"id": victim.id, "type": victim.type, "cause": f"EATEN_BY_{cell.id}", "tags": tags})
+                                                    
                             # add experience: reward proportional to energy_gain (un-normalized)
                             self.hive_experiences.append((obs_vec, 3, float(energy_gain)))
                         else:
@@ -826,6 +1193,10 @@ class EcoLifeSimulation:
                                     if random.random() < 0.02:
                                         p.data += torch.randn_like(p.data) * 0.01
                             child = Cell(chosen, CellType.HERBIVORE, brain=child_brain)
+                            # Mutation: Metabolism
+                            mutation = random.uniform(-0.1, 0.1)
+                            child.metabolism = max(0.5, min(2.0, cell.metabolism + mutation))
+                            
                             child.generation = cell.generation + 1
                             to_add.append((chosen, child))
                             cell.energy *= 0.5
@@ -869,7 +1240,13 @@ class EcoLifeSimulation:
                     empty = [n for n in self.get_neighbors(pos) if n not in new_cells and n not in to_remove]
                     if empty:
                         newp = random.choice(empty)
-                        to_add.append((newp, Cell(newp, CellType.PLANT)))
+                        newp = random.choice(empty)
+                        child_plant = Cell(newp, CellType.PLANT)
+                        # Mutation: Metabolism
+                        mutation = random.uniform(-0.1, 0.1)
+                        child_plant.metabolism = max(0.5, min(2.0, cell.metabolism + mutation))
+                        
+                        to_add.append((newp, child_plant))
                         cell.energy *= 0.5  # Energy cost of reproduction
                         self.stats['total_births'] += 1
                         current_plant_count += 1  # Increment counter
@@ -938,6 +1315,18 @@ class EcoLifeSimulation:
 
         # maybe train hive
         self.maybe_train_hive()
+        
+        # REMOVED: Auto-trigger commentary logic. Now handled by manual button in handle_events.
+
+    def run_commentary_thread(self, generation, stats_str):
+        try:
+            res = self.commentary_agent.invoke(generation, stats_str)
+            self.commentary_queue.put(res["commentary"])
+        except Exception as e:
+            self.commentary_queue.put(f"Error: {e}")
+        finally:
+            # We can signal done if needed, but is_generating flag reset happens when queue is read
+            pass
 
     def species_diversity_score(self):
         counts = defaultdict(int)
@@ -1018,71 +1407,274 @@ class EcoLifeSimulation:
                 surf.fill((220, 60, 60, int(28 * val)))
                 self.screen.blit(surf, (px - s, py - s))
 
+        pygame.display.flip()
+
+    def draw_dashboard(self):
+        # Draw background for sidebar
+        sidebar_rect = pygame.Rect(self.sim_width, 0, self.sidebar_width, self.height)
+        pygame.draw.rect(self.screen, (30, 35, 45), sidebar_rect)
+        pygame.draw.line(self.screen, (100, 100, 120), (self.sim_width, 0), (self.sim_width, self.height), 2)
+        
+        # Stats
         species_count = defaultdict(int)
         for c in self.cells.values(): species_count[c.type] += 1
+        
+        start_x = self.sim_width + 15
+        y = 20
+        
+        def draw_text(txt, size=24, color=(220, 220, 220)):
+            nonlocal y
+            # Use default system font or fallback
+            f = pygame.font.SysFont("Arial", size)
+            s = f.render(txt, True, color)
+            self.screen.blit(s, (start_x, y))
+            y += size + 8
+            
+        draw_text("AI ECOSPHERE", 28, (255, 255, 255))
+        y += 10
+        draw_text(f"Generation: {self.generation}", 24, (255, 255, 100))
+        draw_text(f"Population: {len(self.cells)}")
+        draw_text(f"Plants: {species_count[CellType.PLANT]}", 22, self.cell_colors[CellType.PLANT])
+        draw_text(f"Herbivores: {species_count[CellType.HERBIVORE]}", 22, self.cell_colors[CellType.HERBIVORE])
+        draw_text(f"Predators: {species_count[CellType.PREDATOR]}", 22, self.cell_colors[CellType.PREDATOR])
+        y += 10
+        draw_text(f"Temp: {self.temperature:.2f}", 20)
+        draw_text(f"Light: {self.light:.2f}", 20)
+        draw_text(f"Diversity: {self.species_diversity_score():.2f}", 20)
+        
+        # Commentary Box
+        y += 30
+        draw_text("Narrative:", 22, (150, 200, 255))
+        
+        # Wrap logic helper
+        def draw_wrapped_text(text, font, color, max_width, start_x, start_y):
+            # Preserve existing newlines first
+            paragraphs = text.split('\n')
+            final_lines = []
+            
+            for para in paragraphs:
+                words = para.split(' ')
+                curr_line = ""
+                for w in words:
+                    test_line = curr_line + w + " "
+                    if font.size(test_line)[0] < max_width:
+                        curr_line = test_line
+                    else:
+                        if curr_line == "": 
+                            final_lines.append(w)
+                        else:
+                            final_lines.append(curr_line)
+                            curr_line = w + " "
+                final_lines.append(curr_line)
+            
+            curr_y = start_y
+            for line in final_lines:
+                s = font.render(line, True, color)
+                self.screen.blit(s, (start_x, curr_y))
+                curr_y += font.get_height() + 2
+            return curr_y
 
-        lines = [
-            f"Gen: {self.generation}",
-            f"Pop: {len(self.cells)}  Plants:{species_count[CellType.PLANT]}  Herb:{species_count[CellType.HERBIVORE]}  Pred:{species_count[CellType.PREDATOR]}",
-            f"Temp: {self.temperature:.2f}  Light: {self.light:.2f}  Diversity: {self.species_diversity_score():.2f}",
-            f"Births: {self.stats['total_births']}  Deaths: {self.stats['total_deaths']}",
-            f"HiveExp: {len(self.hive_experiences)}  Training: {'ON' if self.training_enabled else 'OFF'}"
-        ]
-        y = 6
-        for L in lines:
-            surf = self.font.render(L, True, (230, 230, 230))
-            self.screen.blit(surf, (8, y));
-            y += 20
+        # Wrap commentary text
+        font = pygame.font.SysFont("Georgia", 18, italic=True)
+        # fallback if Georgia not available
+        if not pygame.font.match_font("Georgia"):
+            font = pygame.font.SysFont("Arial", 18, italic=True)
+            
+        y = draw_wrapped_text(self.current_commentary, font, (240, 240, 255), self.sidebar_width - 30, start_x, y)
+            
+        # Draw Button
+        # Update button y position to be below the text, or fixed at bottom
+        self.button_rect.y = self.height - 200
+        
+        mouse_pos = pygame.mouse.get_pos()
+        hover = self.button_rect.collidepoint(mouse_pos)
+        
+        btn_color = (60, 100, 180) if hover else (50, 80, 140)
+        if self.is_generating:
+            btn_color = (80, 80, 80) # Greyed out
+            
+        pygame.draw.rect(self.screen, btn_color, self.button_rect, border_radius=8)
+        
+        btn_txt = "Analyzing..." if self.is_generating else "Generate Report"
+        txt_surf = self.font.render(btn_txt, True, (255, 255, 255))
+        txt_rect = txt_surf.get_rect(center=self.button_rect.center)
+        self.screen.blit(txt_surf, txt_rect)
+        
+        # Draw Input Box (God Mode)
+        
+        self.input_rect.y = self.button_rect.y + 50
+        pygame.draw.rect(self.screen, (20, 20, 20), self.input_rect)
+        pygame.draw.rect(self.screen, (100, 100, 200) if self.input_active else (80, 80, 80), self.input_rect, 2)
+        
+        # Clip input text if too long for box rendering (simple scroll)
+        display_txt = self.input_text
+        while self.font.size(display_txt)[0] > self.input_rect.width - 20:
+            display_txt = display_txt[1:]
 
-        pygame.display.flip()
+        in_surf = self.font.render(display_txt, True, (255, 255, 255))
+        self.screen.blit(in_surf, (self.input_rect.x + 5, self.input_rect.y + 5))
+        
+        # minimal placeholder text
+        if not self.input_text and not self.input_active:
+             ph = self.font.render("God Mode command...", True, (100, 100, 100))
+             self.screen.blit(ph, (self.input_rect.x + 5, self.input_rect.y + 5))
+
+        # feedback
+        if self.input_feedback:
+             fb_font = pygame.font.SysFont("Arial", 16)
+             
+             # scrollable area
+             view_y = self.input_rect.y + 40
+             view_h = self.height - view_y - 10
+             view_rect = pygame.Rect(self.input_rect.x, view_y, self.sidebar_width - 10, view_h)
+             
+             # Clip
+             old_clip = self.screen.get_clip()
+             self.screen.set_clip(view_rect)
+             
+             # Draw text offset by scroll
+             # We passed draw_wrapped_text helper inside this function so we can reuse it
+             # But it was defined inside draw_dashboard, so it is available here.
+             final_y = draw_wrapped_text(self.input_feedback, fb_font, (150, 255, 150), 
+                                         self.sidebar_width - 10, view_rect.x, view_rect.y - self.god_mode_scroll_y)
+             
+             self.god_mode_content_height = final_y - (view_rect.y - self.god_mode_scroll_y)
+             
+             self.screen.set_clip(old_clip)
+             
+             # Draw scrollbar if needed
+             if self.god_mode_content_height > view_h:
+                 sb_h = max(20, int(view_h * (view_h / self.god_mode_content_height)))
+                 sb_y = view_y + int((self.god_mode_scroll_y / self.god_mode_content_height) * view_h)
+                 pygame.draw.rect(self.screen, (100, 100, 100), (self.width - 6, sb_y, 4, sb_h))
+
+    def process_god_mode_queue(self):
+        while not GOD_MODE_QUEUE.empty():
+            cmd, arg1, arg2 = GOD_MODE_QUEUE.get()
+            print(f"[GodMode] Processing: {cmd} {arg1} {arg2}")
+            
+            if cmd == "spawn":
+                # arg1=species str, arg2=count
+                s_map = {"plant": CellType.PLANT, "herbivore": CellType.HERBIVORE, "predator": CellType.PREDATOR}
+                ctype = s_map.get(arg1.lower(), CellType.HERBIVORE)
+                for _ in range(int(arg2)):
+                    pos = (random.randint(0, self.grid_width-1), random.randint(0, self.grid_height-1))
+                    if pos not in self.cells:
+                        self.cells[pos] = Cell(pos, ctype)
+            elif cmd == "env":
+                # arg1=temp_delta, arg2=light_delta
+                self.temperature = clamp(self.temperature + float(arg1), 0.0, 1.0)
+                self.light = clamp(self.light + float(arg2), 0.2, 1.0)
+            elif cmd == "cull":
+                # arg1=species, arg2=pct
+                s_map = {"plant": CellType.PLANT, "herbivore": CellType.HERBIVORE, "predator": CellType.PREDATOR}
+                ctype = s_map.get(arg1.lower())
+                if ctype is not None:
+                    to_kill = []
+                    for pos, c in self.cells.items():
+                        if c.type == ctype and random.random() < float(arg2):
+                            to_kill.append(pos)
+                    for k in to_kill:
+                        c = self.cells[k]
+                        GLOBAL_EVENT_LOGGER.log(self.generation, "DEATH", {"id": c.id, "type": c.type, "cause": "GOD_CULL"})
+                        del self.cells[k]
+                    self.stats['total_deaths'] += len(to_kill)
+
+    def run_god_mode_thread(self, text):
+        res = self.god_mode_agent.process_command(text)
+        self.input_feedback = res
 
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+            elif event.type == pygame.MOUSEWHEEL:
+                # Check if mouse is in sidebar feedback area
+                mx, my = pygame.mouse.get_pos()
+                if mx > self.sim_width:
+                    # scroll sensitivity
+                    self.god_mode_scroll_y -= event.y * 20
+                    # clamp
+                    view_h = self.height - (self.input_rect.y + 40) - 10
+                    max_scroll = max(0, self.god_mode_content_height - view_h)
+                    self.god_mode_scroll_y = max(0, min(self.god_mode_scroll_y, max_scroll))
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if self.input_rect.collidepoint(event.pos):
+                    self.input_active = True
+                else:
+                    self.input_active = False
+                
+                if event.button == 1: # Left click
+                    if self.button_rect.collidepoint(event.pos) and not self.is_generating:
+                        # Trigger report
+                        self.is_generating = True
+                        self.current_commentary = "Thinking..."
+                        # Gather stats
+                        species_count = defaultdict(int)
+                        current_plant_count = 0 
+                        for c in self.cells.values(): 
+                            species_count[c.type] += 1
+                            if c.type == CellType.PLANT: current_plant_count += 1
+                        stats_str = f"Pop:{len(self.cells)} Plants:{current_plant_count} Herb:{species_count[CellType.HERBIVORE]} Pred:{species_count[CellType.PREDATOR]}. Temp:{self.temperature:.2f}."
+                        threading.Thread(target=self.run_commentary_thread, args=(self.generation, stats_str)).start()
+                        
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    self.playing = not self.playing
-                elif event.key == pygame.K_c:
-                    self.cells.clear();
-                    self.playing = False;
-                    self.generation = 0
-                elif event.key == pygame.K_f:
-                    self.spawn_flower_pattern(random.randint(6, self.grid_width - 8),
-                                              random.randint(6, self.grid_height - 8))
-                elif event.key == pygame.K_o:
-                    self.spawn_predator_swarm(random.randint(5, self.grid_width - 6),
-                                              random.randint(5, self.grid_height - 6))
-                elif event.key == pygame.K_n:
-                    self.spawn_nutrients_field(random.randint(5, self.grid_width - 6),
-                                               random.randint(5, self.grid_height - 6), 4)
-                elif event.key == pygame.K_s:
-                    self.spawn_spiral_galaxy(random.randint(8, self.grid_width - 10),
-                                             random.randint(8, self.grid_height - 10))
-                elif event.key == pygame.K_r:
-                    self.generate_report()
-                elif event.key == pygame.K_t:
-                    self.training_enabled = not getattr(self, 'training_enabled', True)
-                    print("[Hive] Training toggled to", self.training_enabled)
-                elif event.key == pygame.K_e:
-                    print("➡️ Scarcity event triggered (plants weakened).")
-                    # simple scarcity: reduce plant energy and growth chance
-                    for c in list(self.cells.values()):
-                        if c.type == CellType.PLANT:
-                            c.energy *= 0.25
-                    self.plant_passive_grow_chance *= 0.2
-                elif event.key == pygame.K_k:
-                    print("➡️ Killing all predators.")
-                    self.exterminate_species(CellType.PREDATOR)
-                elif event.key == pygame.K_l:
-                    print("➡️ Killing all herbivores.")
-                    self.exterminate_species(CellType.HERBIVORE)
-                elif event.key == pygame.K_p:
-                    print("➡️ Killing all plants.")
-                    self.exterminate_species(CellType.PLANT)
-                elif event.key == pygame.K_q:
-                    print("➡️ Quit requested.")
-                    self.running = False
+                if self.input_active:
+                    if event.key == pygame.K_RETURN:
+                       if self.input_text:
+                           self.input_feedback = "Processing..."
+                           threading.Thread(target=self.run_god_mode_thread, args=(self.input_text,)).start()
+                           self.input_text = ""
+                    elif event.key == pygame.K_BACKSPACE:
+                        self.input_text = self.input_text[:-1]
+                    else:
+                        self.input_text += event.unicode
+                else:
+                    # Normal hotkeys
+                    if event.key == pygame.K_SPACE:
+                        self.playing = not self.playing
+                    elif event.key == pygame.K_c:
+                        self.cells.clear();
+                        if "GLOBAL_EVENT_LOGGER" in globals():
+                             GLOBAL_EVENT_LOGGER.log(self.generation, "EXTINCTION", {"cause": "USER_CLEAR"})
+                        self.playing = False;
+                        self.generation = 0
+                    elif event.key == pygame.K_f:
+                        self.spawn_flower_pattern(random.randint(6, self.grid_width - 8),
+                                                  random.randint(6, self.grid_height - 8))
+                    elif event.key == pygame.K_o:
+                        self.spawn_predator_swarm(random.randint(5, self.grid_width - 6),
+                                                  random.randint(5, self.grid_height - 6))
+                    elif event.key == pygame.K_n:
+                        self.spawn_nutrients_field(random.randint(5, self.grid_width - 6),
+                                                   random.randint(5, self.grid_height - 6), 4)
+                    elif event.key == pygame.K_s:
+                        self.spawn_spiral_galaxy(random.randint(8, self.grid_width - 10),
+                                                 random.randint(8, self.grid_height - 10))
+                    elif event.key == pygame.K_r:
+                        self.generate_report()
+                    elif event.key == pygame.K_t:
+                        self.training_enabled = not getattr(self, 'training_enabled', True)
+                        print("[Hive] Training toggled to", self.training_enabled)
+                    elif event.key == pygame.K_e:
+                        print("➡️ Scarcity event triggered (plants weakened).")
+                        # simple scarcity: reduce plant energy and growth chance
+                        for c in list(self.cells.values()):
+                            if c.type == CellType.PLANT:
+                                c.energy *= 0.25
+                        self.plant_passive_grow_chance *= 0.2
+                    elif event.key == pygame.K_k:
+                        print("➡️ Killing all predators.")
+                        self.exterminate_species(CellType.PREDATOR)
+                    elif event.key == pygame.K_l:
+                        print("➡️ Killing all herbivores.")
+                        self.exterminate_species(CellType.HERBIVORE)
+                    elif event.key == pygame.K_p:
+                        print("➡️ Killing all plants.")
+                        self.exterminate_species(CellType.PLANT)
+                    elif event.key == pygame.K_q:
+                        print("➡️ Quit requested.")
+                        self.running = False
 
     def exterminate_species(self, species_type):
         species_names = {CellType.PLANT: "Plants", CellType.HERBIVORE: "Herbivores", CellType.PREDATOR: "Predators",
@@ -1118,12 +1710,23 @@ class EcoLifeSimulation:
             if self.count >= self.update_freq:
                 self.count = 0
                 self.update_ecosystem()
+                self.process_god_mode_queue() # Execute commands if any
                 self.generation += 1
                 if self.generation % 20 == 0:
                     self.generate_report()
-            pygame.display.set_caption(
-                f"AI Ecosphere - {'EVOLVING' if self.playing else 'PAUSED'} | Gen {self.generation}")
-            self.draw_grid()
+            
+            # Check for new commentary from thread
+            while not self.commentary_queue.empty():
+                self.current_commentary = self.commentary_queue.get()
+                self.is_generating = False # unlock button
+            
+            pygame.display.set_caption(f"AI Ecosphere - {'EVOLVING' if self.playing else 'PAUSED'} | Gen {self.generation}")
+            
+            # Draw
+            self.draw_grid()      # Draws game board
+            self.draw_dashboard() # Draws sidebar overlay
+            pygame.display.flip() # Flip buffer
+
         self.generate_report()
         pygame.quit()
 
