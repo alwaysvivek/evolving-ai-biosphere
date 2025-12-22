@@ -1,323 +1,113 @@
-# 🌍 **Evolving AI Biosphere**
-### A living digital world where AI organisms evolve and adapt through memory, learning, and survival.
+# 🌍 Evolving AI Biosphere
+
+### A self-evolving digital ecosystem where AI organisms fight for survival.
+
+[![Status](https://img.shields.io/badge/Status-Active-success)]()
+[![Python](https://img.shields.io/badge/Python-3.9%2B-blue)]()
+[![MLflow](https://img.shields.io/badge/MLflow-Tracking-blue)]()
+[![Ollama](https://img.shields.io/badge/LLM-Llama3.2-orange)]()
 
 ---
 
-## 📚 Table of Contents
-1. [🧠 Overview](#-overview)  
-2. [🖼️ Demo Snapshot](#-demo-snapshot)  
-3. [🧬 Species Overview](#-species-overview)  
-   - [🌱 Plants (Green)](#-plants-green)  
-   - [🐇 Herbivores (Blue)](#-herbivores-blue)  
-   - [🦊 Predators (Red)](#-predators-red)  
-4. [🌦️ Environment Dynamics](#️-environment-dynamics)  
-5. [⚙️ Energy Flow](#️-energy-flow)  
-6. [🧪 Scent Diffusion System](#-scent-diffusion-system)  
-7. [🧭 Emergent Phenomena](#-emergent-phenomena)  
-8. [🧬 Reproduction & Inheritance](#-reproduction--inheritance)  
-9. [💀 Death & Decay](#-death--decay)  
-10. [🕹️ Interactive Controls](#️-interactive-controls)  
-11. [🎨 Visual Feedback](#-visual-feedback)  
-12. [📊 Long-Term Dynamics](#-long-term-dynamics)  
-13. [⚙️ Installation & Setup](#️-installation--setup)  
-14. [▶️ Running the Simulation](#️-running-the-simulation)  
-15. [🌋 Test Ecosystem Resilience](#-test-ecosystem-resilience)  
-16. [🧠 Study Hive Learning](#-study-hive-learning)  
-17. [🧩 Custom Scenarios](#-custom-scenarios)  
-18. [📈 Reporting](#-reporting)  
-19. [🌍 Summary](#-summary)
+## 📖 Overview
+
+**Evolving AI Biosphere** is a complex artificial life simulation that combines **Deep Reinforcement Learning**, **Genetic Algorithms**, and **Large Language Models** to create a living, breathing ecosystem.
+
+Organisms in this world are not programmed with rules—they *learn* how to survive.
+
+- **Predators** share a collective "Hive Mind" (LSTM) that learns from the experiences of the pack.
+- **Herbivores** evolve individually via genetic mutation of their neural weights.
+- **The World** is watched by an "AI Council" (Gaia, Entropy, Arbiter) that can intervene to balance the system.
+
+👉 **[Read the Technical Documentation](https://alwaysvivek.github.io/evolving-ai-biosphere/docs/index.html)** for a deep dive into the architecture and theory.
 
 ---
 
-## 🧠 Overview
+## 🛠 Tech Stack
 
-**Evolving AI Biosphere** (formerly *AI Ecosphere*) is a **self-evolving artificial life simulation** where three species — **plants**, **herbivores**, and **predators** — interact in a dynamic, learning-based ecosystem.
-
-Unlike static simulations, organisms here use **neural networks** and **reinforcement learning** to evolve **emergent behaviors** — adapting, learning, and surviving across generations.
-
-> A digital petri dish where **machine learning meets natural selection**.
-
-🧩 **Technical Documentation:**  
-Basically, how it all comes together — visit the full docs at  
-👉 [https://alwaysvivek.github.io/evolving-ai-biosphere/](https://alwaysvivek.github.io/evolving-ai-biosphere/)
+| Component | Technology | Description |
+|-----------|------------|-------------|
+| **Core Engine** | Python, Pygame | Real-time simulation loop and rendering. |
+| **Neural Nets** | PyTorch | LSTM networks for creature brains. |
+| **LLM Orchestration** | LangChain, LangGraph | Multi-agent council system (Gaia/Entropy). |
+| **Inference** | Ollama | Local LLM serving (Llama 3.2). |
+| **Observability** | MLflow | Experiment tracking and metric logging. |
 
 ---
 
-## 🖼️ Demo Snapshot
+## 🧩 Architecture
 
-Generation 100 — stabilized biosphere (plant dominance phase):
-
-<p align="center">
-  <img src="logs/sample-output-gen-100.jpeg" alt="Generation 100 Snapshot" width="60%">
-</p>
-
-> **Description:**  
-> A dynamic view of the AI Ecosphere at Generation 100. The dark, textured terrain is populated by three species: **Plants (Green)**, **Predators (Red)**, and sparse **Herbivores (Blue)**, alongside **Nutrient Deposits (Yellow)**.  
-> Notice the emergence of distinct territories: a dense central *Plant Forest* protected by clustered, actively hunting predators, and areas of high *Plant Scent* (green halos) indicating concentrated resources.  
-> The top-left overlay confirms the critical environmental balance: a **high population (277)** but a **low, yet stable, Diversity Score (0.71)**.
-
-
-📄 **View raw simulation log:**  
-[logs/sample_output.txt](logs/sample_output.txt)
-
----
-
-## 🧬 Species Overview
-
-### 🌱 **Plants (Green)**
-Sessile organisms that generate energy via photosynthesis and reproduce asexually when conditions allow.
-
-**Life Cycle:**
-- Gain energy from light; reproduce at **130+ energy** (splitting energy with offspring)
-- Die from **old age (350+ cycles)**, **overcrowding**, **low light**, or **herbivore consumption**
-- Emit **scent** signals to attract herbivores
-
-**Key Stats:**
-- Max Energy: 150  
-- Photosynthesis: +3.5 energy/cycle  
-- Metabolism: -0.4 energy/cycle  
-- Death in low light (< 0.18 intensity)
+```mermaid
+graph TD
+    User[User] -->|Run| Main[main.py Orchestrator]
+    Main -->|Launches| Ollama[Ollama Service]
+    Main -->|Launches| MLflow[MLflow UI]
+    Main -->|Starts| Sim[Simulation Core]
+    
+    subgraph Ecosystem
+        Sim -->|Updates| Grid[Game Grid]
+        Sim -->|Manages| Council[AI Council (LangGraph)]
+    end
+    
+    subgraph Agents
+        Predators[Predator Hive (Shared LSTM)]
+        Herbivores[Herbivore Individuals (Genome)]
+    end
+    
+    Council -->|Intervenes| Grid
+    Sim -->|Logs| MLflow
+```
 
 ---
 
-### 🐇 **Herbivores (Blue)**
-Mobile agents that eat plants and flee predators using their own **LSTM neural networks**.
+## ✨ Key Features
 
-**Behavior Systems:**
-- **Foraging:** Seek plant-rich areas via scent gradients  
-- **Predator Avoidance:** Escape zones with predator presence  
-- **Energy Management:** Balance eating, resting, and reproducing  
-- **Reproduction:** At **90+ energy** (with mutated neural weights)
-
-**LSTM Inputs (8):**
-1. Nearby plant count  
-2. Herbivore count  
-3. Predator count  
-4. Nutrient count  
-5. Energy level  
-6. Age factor  
-7–8. Random noise (exploration)
-
-**Outputs:** Reproduce, move/hunt, rest, or idle.
+- **🧠 Hive Mind Intelligence:** Predators learn collectively using a shared experience buffer and policy gradient training.
+- **🧬 Genetic Evolution:** Herbivores evolve over generations through random mutations in their neural weights.
+- **🤖 AI God Mode:** A LangGraph-based "Council" (Gaia vs Entropy) debates and intervenes in the simulation autonomously.
+- **📊 MLflow Tracking:** Live dashboard of population statistics, extinction events, and system health.
+- **🧪 Pheromone System:** Gradient-based scent maps for indirect agent communication.
 
 ---
 
-### 🦊 **Predators (Red)**
-Apex hunters governed by a **collective LSTM Hive Mind** — all predators share one evolving neural brain.
+## 🚀 Installation & Setup
 
-**Life Cycle:**
-- Feed on herbivores (+120 energy per kill)
-- Reproduce at **100+ energy**
-- Die from starvation or old age (600+ cycles)
+### Prerequisites
+- Python 3.9+
+- Ollama (installed and running with `llama3.2`)
 
-**Hive Mind Learning:**
-- All predators share experiences (observations, rewards, actions)
-- Every 20 generations, the **Hive trains via REINFORCE**
-- Collective intelligence leads to evolved group strategies (e.g., flanking, trapping prey)
+### 1. Clone the Repository
+```bash
+git clone https://github.com/alwaysvivek/evolving-ai-biosphere.git
+cd evolving-ai-biosphere
+```
 
----
-
-## 🌦️ Environment Dynamics
-
-### 🔆 **Spatial Light Field**
-- Varies across the map (bright → plant-rich, dark → barren)
-- Affects plant growth and energy efficiency
-
-### 🌡️ **Temperature**
-- Fluctuates between 0.0–1.0  
-- Alters metabolism and photosynthesis efficiency
-
-### 🌘 **Global Light Cycle**
-- Varies between 0.3–1.0 to simulate day/night cycles
-
-### 🪨 **Nutrient Spawning**
-- Random nutrient deposits boost local ecosystem growth
+### 2. Auto-Setup
+We provide a unified orchestrator that handles venv creation, dependencies, and service launching.
+```bash
+python3 main.py
+```
+*This command will check for Ollama, start MLflow, create the virtualenv if needed, and run the simulation.*
 
 ---
 
-## ⚙️ Energy Flow
-
-Energy drives survival — all species gain and spend it differently:
-
-| Flow | Source → Target | Description |
-|------|-----------------|--------------|
-| ☀️ | Light → Plants | Photosynthesis |
-| 🌿 | Plants → Herbivores | Foraging |
-| 🩸 | Herbivores → Predators | Hunting |
-| 🔥 | All | Metabolism & movement drain |
-
-**Balance:**  
-Overgrowth in one level causes cascading effects — predator crashes, herbivore booms, plant depletion, etc.
-
----
-
-## 🧪 Scent Diffusion System
-
-Chemical scent fields create **indirect perception**:
-
-| Scent Type | Emitted By | Function |
-|-------------|-------------|-----------|
-| 🌿 **Plant Scent** | Plants | Attracts herbivores |
-| 🐾 **Herbivore Scent** | Herbivores | Attracts predators |
-
-Each scent diffuses outward over 3 steps, creating **gradient maps** for navigation.
-
----
-
-## 🧭 Emergent Phenomena
-
-The AI-driven evolution leads to realistic ecological dynamics:
-
-- **Boom–Bust Cycles:** Natural oscillations in population sizes  
-- **Spatial Clustering:** Territory and colony formation  
-- **Behavioral Evolution:** Learned evasion and hunting strategies  
-- **Extinction Events:** Permanent loss of species reshapes balance  
-- **Monoculture Dominance:** Single-species takeovers causing fragility  
-
----
-
-## 🧬 Reproduction & Inheritance
-
-| Species | Inheritance Type | Mutation |
-|----------|------------------|-----------|
-| 🌱 Plants | Asexual cloning | None |
-| 🐇 Herbivores | Neural weight mutation | ±0.01 (2% chance) |
-| 🦊 Predators | Hive-mind training | Collective evolution |
-
----
-
-## 💀 Death & Decay
-
-| Cause | Description |
-|--------|--------------|
-| Starvation | Energy depletion |
-| Old Age | Beyond max lifespan |
-| Predation | Eaten by higher species |
-| Overcrowding | Excess neighbors (plants) |
-| Light Starvation | Insufficient local light |
-| Random Events | Manual extinction events |
-
----
-
-## 🕹️ Interactive Controls
+## 🎮 Controls
 
 | Key | Action |
 |-----|--------|
-| **SPACE** | Play/Pause simulation |
-| **C** | Clear all organisms |
-| **R** | Generate statistical report |
-| **T** | Toggle Hive training |
-| **F** | Spawn flower pattern |
-| **S** | Spawn spiral formation |
-| **O** | Predator swarm |
-| **N** | Nutrient field |
-| **K** | Kill all predators |
-| **L** | Kill all herbivores |
-| **P** | Kill all plants |
-| **E** | Scarcity event |
-| **Q** | Quit simulation |
+| `SPACE` | Pause/Resume |
+| `R` | Generate Console Report |
+| `T` | Toggle Predator Training |
+| `K` | Kill All Predators (Test resilience) |
+| `E` | Trigger Scarcity Event |
 
 ---
 
-## 🎨 Visual Feedback
+## 📊 Monitoring
 
-- **Colors:** Green=Plant, Blue=Herbivore, Red=Predator  
-- **Brightness:** Indicates energy level  
-- **Scent Halos:** Faint green/red glows show chemical concentrations  
-- **Background:** Noise-based soil texture that shifts with temperature and light  
-- **HUD Overlay:** Displays population stats, generation count, diversity, temperature, and hive experience
+Once the simulation starts, open MLflow to see live metrics:
+**[http://127.0.0.1:5000](http://127.0.0.1:5000)**
 
 ---
 
-## 📊 Long-Term Dynamics
-
-| Phase | Description |
-|--------|-------------|
-| **0–50 generations** | Unstable bursts and population crashes |
-| **50–200 generations** | Evolved equilibrium and specialization |
-| **200+ generations** | Stable biomes, learned behaviors, and possible extinctions |
-
-> Each major extinction or scarcity event permanently alters ecosystem balance.
-
----
-
-## ⚙️ Installation & Setup
-
-### �
- **Prerequisites**
-- Python 3.7+  
-- Basic GPU/CPU for 800×800 rendering (30 FPS)  
-
----
-
-### 📦 **Installation**
-
-1. **Clone or Download Repository**
-   ```bash
-   git clone https://github.com/<your-username>/evolving-ai-biosphere.git
-   cd evolving-ai-biosphere
-2. **Install dependencies**
-   ```bash
-    pip3 install -r requirements.txt
-   ```
-3. Run simulation
-   ```bash
-     python3 main.py
-   ```
-
-### ▶️ Running the Simulation
-
-Then press:
-1. **SPACE** → Start simulation  
-2. **R** → View stats report periodically  
-3. **Watch** the populations evolve for 50–100 generations  
-
----
-
-### 🌋 Test Ecosystem Resilience
-
-- Let the world stabilize  
-- Press **K** → Wipe predators  
-- Observe herbivore explosion and eventual plant collapse  
-
----
-
-### 🧠 Study Hive Learning
-
-- Press **T** → Disable predator training (baseline)  
-- Press **T** again → Re-enable and wait 20+ generations  
-- Compare predator coordination and efficiency  
-
----
-
-### 🧩 Custom Scenarios
-
-- **C** → Clear world  
-- **F** → Add plants  
-- **O** → Add predators  
-- **SPACE** → Begin evolution  
-
----
-
-## 📈 Reporting
-
-Press **R** anytime to generate:
-
-- Generation count  
-- Total and per-species population  
-- Temperature and light levels  
-- Diversity score *(Shannon entropy)*  
-- Total births and deaths  
-- Hive training status  
-
----
-
-## 🌍 Summary
-
-**Evolving AI Biosphere** creates a sandbox of **digital evolution**, where:
-
-- Neural agents **adapt and learn**  
-- The **Hive Mind** evolves collectively  
-- Nature’s balance unfolds through **machine learning**  
-
-> A glimpse into how life might look when evolution is powered by AI.
+**Author**: Vivek Dagar

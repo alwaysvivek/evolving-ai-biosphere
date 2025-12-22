@@ -1,3 +1,6 @@
 pygame
 torch
 numpy
+mlflow
+langchain-ollama
+langgraph

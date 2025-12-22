@@ -1,7 +1,14 @@
 # ai_ecosphere_hive.py
 # Requires: pygame, torch, numpy
 # pip install pygame torch numpy
+import warnings
+# Suppress specific SSL warnings from urllib3
+warnings.filterwarnings("ignore", category=UserWarning, module="urllib3")
+# Suppress LangChain pydantic v1 deprecation if we can't fully upgrade yet, but cleaning the import helps
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 import pygame
+import time
 import random
 import numpy as np
 import math
@@ -18,10 +25,12 @@ from langgraph.graph import StateGraph, START, END
 from langchain_ollama import OllamaLLM, ChatOllama
 from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
-from langchain_core.pydantic_v1 import BaseModel, Field
+# UPDATED: Use pydantic directly to avoid deprecation warning
+from pydantic import BaseModel, Field
 import uuid
 import datetime
 import re
+import mlflow
 
 
 # ------- Utilities -------
@@ -234,22 +243,29 @@ class SimState(TypedDict):
 
 class CommentaryAgent:
     def __init__(self):
-        try:
-            self.llm = OllamaLLM(model="llama3.2")
-            print("[CommentaryAgent] Connected to Ollama (llama3.2)")
-        except Exception:
-            self.llm = None
-            print("[CommentaryAgent] Could not connect to Ollama. Ensure it is running.")
-
-        builder = StateGraph(SimState)
-        builder.add_node("commentator", self.generate_commentary)
-        builder.add_edge(START, "commentator")
-        builder.add_edge("commentator", END)
-        self.graph = builder.compile()
+        self.llm = None
+        self.graph = None
+        
+        # Async init
+        def _init():
+            try:
+                self.llm = OllamaLLM(model="llama3.2")
+                builder = StateGraph(SimState)
+                builder.add_node("commentator", self.generate_commentary)
+                builder.add_edge(START, "commentator")
+                builder.add_edge("commentator", END)
+                self.graph = builder.compile()
+                print("[CommentaryAgent] Connected to Ollama (llama3.2)")
+            except Exception as e:
+                print(f"[CommentaryAgent] Init failed: {e}")
+        
+        t = threading.Thread(target=_init)
+        t.daemon = True
+        t.start()
 
     def generate_commentary(self, state: SimState):
         if not self.llm:
-            return {"commentary": "Ollama not available. (Check if running)"}
+            return {"commentary": "Ollama initializing..."}
         
         prompt = (f"You are a nature documentary narrator observing an artificial life simulation. "
                   f"Current Generation: {state['generation']}. "
@@ -442,7 +458,14 @@ class CouncilSystem:
     def invoke(self, stats_str):
         return self.graph.invoke({"stats": stats_str, "messages": []})
 
-GLOBAL_COUNCIL = CouncilSystem()
+GLOBAL_COUNCIL = None
+
+def get_council():
+    global GLOBAL_COUNCIL
+    if GLOBAL_COUNCIL is None:
+        print("[DEBUG] Lazy-initializing Council System...")
+        GLOBAL_COUNCIL = CouncilSystem()
+    return GLOBAL_COUNCIL
 
 @tool
 def summon_council(query: str):
@@ -450,28 +473,38 @@ def summon_council(query: str):
     Use this when the user asks for 'council', 'debate', 'autonomy', or 'help me decide'.
     query: Optional topic for the council to focus on (can be empty).
     """
+    council = get_council()
+    
     # Grab current stats (using global hack or assuming GodModeAgent passes it? 
     # GodModeAgent doesn't inherently have stats. We'll use a placeholder or read from Sim if possible.
     # ideally we pass stats in query or have a way to access SIM.
     # For now, we'll let main loop update a global STATS variable? Or just generic debate.
     # Let's assume the AGENT prompt included stats, or we just ask general advice.
     
-    res = GLOBAL_COUNCIL.invoke("Current Ecosystem Status: Unknown (User requested intervention)")
+    res = council.invoke("Current Ecosystem Status: Unknown (User requested intervention)")
     # Format the debate
     log = "\n".join(res["messages"])
     return f"--- Council Debate ---\n{log}\n----------------------"
 
 class GodModeAgent:
     def __init__(self):
-        try:
-            # function calling usually requires the chat model
-            self.llm = ChatOllama(model="llama3.2", temperature=0)
-            self.tools = [spawn_creatures, change_environment, cull_species, consult_history, summon_council]
-            self.llm_with_tools = self.llm.bind_tools(self.tools)
-            print("[GodMode] Connected to Ollama (llama3.2) with tools.")
-        except Exception:
-            self.llm = None
-            print("[GodMode] Failed to connect.")
+        self.llm = None
+        self.llm_with_tools = None
+        
+        def _init():
+            try:
+                # function calling usually requires the chat model
+                llm = ChatOllama(model="llama3.2", temperature=0)
+                self.tools = [spawn_creatures, change_environment, cull_species, consult_history, summon_council]
+                self.llm_with_tools = llm.bind_tools(self.tools)
+                self.llm = llm # set last to imply readiness
+                print("[GodMode] Connected to Ollama (llama3.2) with tools.")
+            except Exception as e:
+                print(f"[GodMode] Failed to connect: {e}")
+        
+        t = threading.Thread(target=_init)
+        t.daemon = True
+        t.start()
 
     def process_command(self, user_text: str):
         if not self.llm: return "God Mode offline."
@@ -629,8 +662,32 @@ class EcoLifeSimulation:
     MAX_PLANTS_ALLOWED = 700
 
     def __init__(self, width, height, tile_size, fps, device=None):
+        print("[DEBUG] Initializing Pygame...")
         pygame.init()
-        self.sidebar_width = 300
+        print("[DEBUG] Pygame initialized.")
+
+        try:
+             # Connect to MLflow in a non-blocking way or tolerate failure
+             # We spin up a thread to do the logging connection so it doesn't freeze the UI
+             def init_mlflow():
+                try:
+                    time.sleep(2) # Wait for service to possibly come up
+                    mlflow.set_tracking_uri("http://127.0.0.1:5001")
+                    mlflow.set_experiment("EcoLife_Simulation")
+                    self.mlflow_run = mlflow.start_run()
+                    mlflow.log_param("width", width)
+                    mlflow.log_param("height", height)
+                    print("[DEBUG] MLflow connected (Async).")
+                except Exception as e:
+                    print(f"[DEBUG] MLflow async connect failed: {e}")
+             
+             t = threading.Thread(target=init_mlflow)
+             t.daemon = True
+             t.start()
+        except:
+             pass
+        
+        self.sidebar_width = 400  # Increased from 300
         self.sim_width = width
         self.sim_height = height
         self.width = width + self.sidebar_width
@@ -641,9 +698,11 @@ class EcoLifeSimulation:
         self.grid_width = self.sim_width // tile_size;
         self.grid_height = self.sim_height // tile_size
 
+        print("[DEBUG] Creating Display...")
         self.screen = pygame.display.set_mode((self.width, self.height))
         self.clock = pygame.time.Clock()
         pygame.display.set_caption("AI Ecosphere - Predator Hive LSTM")
+        print("[DEBUG] Display created.")
 
         self.background_color = (15, 20, 30)
         self.cell_colors = {
@@ -666,7 +725,10 @@ class EcoLifeSimulation:
         self.light = 0.8
 
         # Predator hive (shared LSTM)
-        self.device = device or (torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu"))
+        print("[DEBUG] Initializing Hive Device...")
+        self.device = device or (torch.device("mps") if torch.backends.mps.is_available() else (torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")))
+        print(f"[DEBUG] Using device: {self.device}")
+        
         self.hive = PredatorHive(input_size=8, hidden=64, output_size=4, device=self.device)
         self.hive_experiences = []  # list of (obs_np, action_idx, reward_float)
         self.TRAIN_INTERVAL = 20  # train hive every N generations
@@ -695,18 +757,8 @@ class EcoLifeSimulation:
         self.font = pygame.font.Font(None, 24)
         self.extinction_events = []
         self.trend_history = deque(maxlen=50)
-        
-        # Commentary System
-        self.commentary_agent = CommentaryAgent()
-        self.commentary_queue = queue.Queue()
-        self.current_commentary = "Click 'Generate Report' to analyze..."
-        self.last_comment_gen = -1
-        # Button rect (setup here, valid after re-calc in draw or fixed pos)
-        # x will be sim_width + 15, y around 400? Let's define it dynamically in draw or init
-        self.button_rect = pygame.Rect(self.sim_width + 20, 500, self.sidebar_width - 40, 40)
-        self.is_generating = False
-        
         # God Mode / Director
+        print("[DEBUG] Initializing God Mode Agent...")
         self.god_mode_agent = GodModeAgent()
         
         # Input Box
@@ -719,6 +771,7 @@ class EcoLifeSimulation:
         
         # Key bindings shown at start
         self.print_bindings()
+        print("[DEBUG] Initialization Complete.")
 
     def print_bindings(self):
         print("\n=== Controls (keyboard) ===")
@@ -1027,6 +1080,14 @@ class EcoLifeSimulation:
 
         obs = self.compute_global_obs()
         self.trend_history.append(obs)
+        
+        if self.generation % 5 == 0:
+            try:
+                mlflow.log_metric("plant_count", species_count[CellType.PLANT], step=self.generation)
+                mlflow.log_metric("herbivore_count", species_count[CellType.HERBIVORE], step=self.generation)
+                mlflow.log_metric("predator_count", species_count[CellType.PREDATOR], step=self.generation)
+                mlflow.log_metric("global_temperature", self.temperature, step=self.generation)
+            except: pass
 
         # passive plant growth (uses modified self.plant_passive_grow_chance)
         # DELETED: Removed passive plant growth loop to enforce energy-threshold reproduction
@@ -1318,15 +1379,6 @@ class EcoLifeSimulation:
         
         # REMOVED: Auto-trigger commentary logic. Now handled by manual button in handle_events.
 
-    def run_commentary_thread(self, generation, stats_str):
-        try:
-            res = self.commentary_agent.invoke(generation, stats_str)
-            self.commentary_queue.put(res["commentary"])
-        except Exception as e:
-            self.commentary_queue.put(f"Error: {e}")
-        finally:
-            # We can signal done if needed, but is_generating flag reset happens when queue is read
-            pass
 
     def species_diversity_score(self):
         counts = defaultdict(int)
@@ -1432,121 +1484,103 @@ class EcoLifeSimulation:
             
         draw_text("AI ECOSPHERE", 28, (255, 255, 255))
         y += 10
-        draw_text(f"Generation: {self.generation}", 24, (255, 255, 100))
-        draw_text(f"Population: {len(self.cells)}")
-        draw_text(f"Plants: {species_count[CellType.PLANT]}", 22, self.cell_colors[CellType.PLANT])
-        draw_text(f"Herbivores: {species_count[CellType.HERBIVORE]}", 22, self.cell_colors[CellType.HERBIVORE])
-        draw_text(f"Predators: {species_count[CellType.PREDATOR]}", 22, self.cell_colors[CellType.PREDATOR])
-        y += 10
-        draw_text(f"Temp: {self.temperature:.2f}", 20)
-        draw_text(f"Light: {self.light:.2f}", 20)
-        draw_text(f"Diversity: {self.species_diversity_score():.2f}", 20)
+        # Stats
+        infos = [
+            f"Generation: {self.generation}",
+            f"Population: {len(self.cells)}",
+            f"Plants: {species_count[CellType.PLANT]}",
+            f"Herbivores: {species_count[CellType.HERBIVORE]}",
+            f"Predators: {species_count[CellType.PREDATOR]}",
+            "",
+            f"Temp: {self.temperature:.2f}",
+            f"Light: {self.light:.2f}",
+            f"Diversity: {len(set([c.type for c in self.cells.values()]))/3.0:.2f}"
+        ]
         
-        # Commentary Box
-        y += 30
-        draw_text("Narrative:", 22, (150, 200, 255))
+        y = 60
+        start_x = self.sim_width + 20
         
-        # Wrap logic helper
-        def draw_wrapped_text(text, font, color, max_width, start_x, start_y):
-            # Preserve existing newlines first
-            paragraphs = text.split('\n')
-            final_lines = []
+        for i, line in enumerate(infos):
+            c = (200, 200, 200)
+            if "Plants" in line: c = self.cell_colors[CellType.PLANT]
+            if "Herbivores" in line: c = self.cell_colors[CellType.HERBIVORE]
+            if "Predators" in line: c = self.cell_colors[CellType.PREDATOR]
             
-            for para in paragraphs:
-                words = para.split(' ')
-                curr_line = ""
-                for w in words:
-                    test_line = curr_line + w + " "
-                    if font.size(test_line)[0] < max_width:
-                        curr_line = test_line
-                    else:
-                        if curr_line == "": 
-                            final_lines.append(w)
-                        else:
-                            final_lines.append(curr_line)
-                            curr_line = w + " "
-                final_lines.append(curr_line)
-            
-            curr_y = start_y
-            for line in final_lines:
-                s = font.render(line, True, color)
-                self.screen.blit(s, (start_x, curr_y))
-                curr_y += font.get_height() + 2
-            return curr_y
+            s = self.font.render(line, True, c)
+            self.screen.blit(s, (start_x, y))
+            y += 24
 
-        # Wrap commentary text
-        font = pygame.font.SysFont("Georgia", 18, italic=True)
-        # fallback if Georgia not available
-        if not pygame.font.match_font("Georgia"):
-            font = pygame.font.SysFont("Arial", 18, italic=True)
-            
-        y = draw_wrapped_text(self.current_commentary, font, (240, 240, 255), self.sidebar_width - 30, start_x, y)
-            
-        # Draw Button
-        # Update button y position to be below the text, or fixed at bottom
-        self.button_rect.y = self.height - 200
+        # God Mode Input
+        # Position it below stats
+        input_y = y + 50
+        self.input_rect.x = start_x
+        self.input_rect.y = input_y
+        self.input_rect.width = self.sidebar_width - 40
+        self.input_rect.height = 32
         
-        mouse_pos = pygame.mouse.get_pos()
-        hover = self.button_rect.collidepoint(mouse_pos)
+        lbl = self.font.render("God Mode Input:", True, (255, 200, 50))
+        self.screen.blit(lbl, (start_x, input_y - 25))
         
-        btn_color = (60, 100, 180) if hover else (50, 80, 140)
-        if self.is_generating:
-            btn_color = (80, 80, 80) # Greyed out
-            
-        pygame.draw.rect(self.screen, btn_color, self.button_rect, border_radius=8)
+        pygame.draw.rect(self.screen, (20, 20, 30), self.input_rect)
+        border = (100, 100, 200) if self.input_active else (80, 80, 80)
+        pygame.draw.rect(self.screen, border, self.input_rect, 2)
         
-        btn_txt = "Analyzing..." if self.is_generating else "Generate Report"
-        txt_surf = self.font.render(btn_txt, True, (255, 255, 255))
-        txt_rect = txt_surf.get_rect(center=self.button_rect.center)
-        self.screen.blit(txt_surf, txt_rect)
+        # Input Text
+        disp = self.input_text
+        while self.font.size(disp)[0] > self.input_rect.width - 20: 
+            disp = disp[1:]
         
-        # Draw Input Box (God Mode)
+        in_s = self.font.render(disp, True, (255, 255, 255))
+        self.screen.blit(in_s, (self.input_rect.x + 5, self.input_rect.y + 5))
         
-        self.input_rect.y = self.button_rect.y + 50
-        pygame.draw.rect(self.screen, (20, 20, 20), self.input_rect)
-        pygame.draw.rect(self.screen, (100, 100, 200) if self.input_active else (80, 80, 80), self.input_rect, 2)
-        
-        # Clip input text if too long for box rendering (simple scroll)
-        display_txt = self.input_text
-        while self.font.size(display_txt)[0] > self.input_rect.width - 20:
-            display_txt = display_txt[1:]
-
-        in_surf = self.font.render(display_txt, True, (255, 255, 255))
-        self.screen.blit(in_surf, (self.input_rect.x + 5, self.input_rect.y + 5))
-        
-        # minimal placeholder text
         if not self.input_text and not self.input_active:
-             ph = self.font.render("God Mode command...", True, (100, 100, 100))
-             self.screen.blit(ph, (self.input_rect.x + 5, self.input_rect.y + 5))
+            ph = self.font.render("Type command...", True, (100, 100, 100))
+            self.screen.blit(ph, (self.input_rect.x + 5, self.input_rect.y + 5))
 
-        # feedback
+        # Feedback Area
         if self.input_feedback:
-             fb_font = pygame.font.SysFont("Arial", 16)
-             
-             # scrollable area
+             # Helper locally defined since we stripped the old one
+             def draw_wrapped_text(text, font, color, max_width, x, start_y):
+                paragraphs = text.replace('\r', '').split('\n')
+                current_y = start_y
+                for paragraph in paragraphs:
+                    words = paragraph.split(' ')
+                    lines = []
+                    curr_line = []
+                    for word in words:
+                        test_words = curr_line + [word]
+                        test_line = ' '.join(test_words)
+                        if font.size(test_line)[0] < max_width:
+                            curr_line.append(word)
+                        else:
+                            lines.append(' '.join(curr_line))
+                            curr_line = [word]
+                    if curr_line: lines.append(' '.join(curr_line))
+                    for l in lines:
+                        s = font.render(l, True, color)
+                        self.screen.blit(s, (x, current_y))
+                        current_y += 18
+                return current_y
+
+             fb_font = pygame.font.Font(None, 18)
              view_y = self.input_rect.y + 40
              view_h = self.height - view_y - 10
              view_rect = pygame.Rect(self.input_rect.x, view_y, self.sidebar_width - 10, view_h)
              
-             # Clip
              old_clip = self.screen.get_clip()
              self.screen.set_clip(view_rect)
              
-             # Draw text offset by scroll
-             # We passed draw_wrapped_text helper inside this function so we can reuse it
-             # But it was defined inside draw_dashboard, so it is available here.
              final_y = draw_wrapped_text(self.input_feedback, fb_font, (150, 255, 150), 
-                                         self.sidebar_width - 10, view_rect.x, view_rect.y - self.god_mode_scroll_y)
+                                         self.sidebar_width - 15, view_rect.x, view_rect.y - self.god_mode_scroll_y)
              
              self.god_mode_content_height = final_y - (view_rect.y - self.god_mode_scroll_y)
-             
              self.screen.set_clip(old_clip)
              
-             # Draw scrollbar if needed
+             # Scrollbar
              if self.god_mode_content_height > view_h:
-                 sb_h = max(20, int(view_h * (view_h / self.god_mode_content_height)))
-                 sb_y = view_y + int((self.god_mode_scroll_y / self.god_mode_content_height) * view_h)
-                 pygame.draw.rect(self.screen, (100, 100, 100), (self.width - 6, sb_y, 4, sb_h))
+                  sb_h = max(20, int(view_h * (view_h / self.god_mode_content_height)))
+                  sb_y = view_y + int((self.god_mode_scroll_y / self.god_mode_content_height) * view_h)
+                  pygame.draw.rect(self.screen, (100, 100, 100), (self.width - 6, sb_y, 4, sb_h))
 
     def process_god_mode_queue(self):
         while not GOD_MODE_QUEUE.empty():
@@ -1604,20 +1638,7 @@ class EcoLifeSimulation:
                 else:
                     self.input_active = False
                 
-                if event.button == 1: # Left click
-                    if self.button_rect.collidepoint(event.pos) and not self.is_generating:
-                        # Trigger report
-                        self.is_generating = True
-                        self.current_commentary = "Thinking..."
-                        # Gather stats
-                        species_count = defaultdict(int)
-                        current_plant_count = 0 
-                        for c in self.cells.values(): 
-                            species_count[c.type] += 1
-                            if c.type == CellType.PLANT: current_plant_count += 1
-                        stats_str = f"Pop:{len(self.cells)} Plants:{current_plant_count} Herb:{species_count[CellType.HERBIVORE]} Pred:{species_count[CellType.PREDATOR]}. Temp:{self.temperature:.2f}."
-                        threading.Thread(target=self.run_commentary_thread, args=(self.generation, stats_str)).start()
-                        
+
             elif event.type == pygame.KEYDOWN:
                 if self.input_active:
                     if event.key == pygame.K_RETURN:
@@ -1715,10 +1736,6 @@ class EcoLifeSimulation:
                 if self.generation % 20 == 0:
                     self.generate_report()
             
-            # Check for new commentary from thread
-            while not self.commentary_queue.empty():
-                self.current_commentary = self.commentary_queue.get()
-                self.is_generating = False # unlock button
             
             pygame.display.set_caption(f"AI Ecosphere - {'EVOLVING' if self.playing else 'PAUSED'} | Gen {self.generation}")
             
@@ -1728,6 +1745,8 @@ class EcoLifeSimulation:
             pygame.display.flip() # Flip buffer
 
         self.generate_report()
+        if hasattr(self, 'mlflow_run') and self.mlflow_run:
+            mlflow.end_run()
         pygame.quit()
 
 

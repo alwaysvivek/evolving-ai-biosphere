@@ -4,581 +4,95 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Evolving AI Biosphere - Technical Documentation</title>
-    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #e2e8f0; }
+        h1, h2, h3 { color: #38bdf8; }
+        .mermaid { background: #1e293b; padding: 20px; border-radius: 8px; }
+        code { background: #334155; padding: 2px 6px; border-radius: 4px; color: #a5f3fc; }
+    </style>
 </head>
-<body>
-    <nav id="navbar">
-        <div class="nav-container">
-            <div class="logo">🧬 Evolving AI Biosphere</div>
-            <ul class="nav-links">
-                <li><a href="#hero">Home</a></li>
-                <li><a href="#overview">Overview</a></li>
-                <li><a href="#neural">Neural Networks</a></li>
-                <li><a href="#energy">Energy System</a></li>
-                <li><a href="#environment">Environment</a></li>
-                <li><a href="#theory">Theory</a></li>
-            </ul>
-        </div>
-    </nav>
+<body class="p-8 max-w-5xl mx-auto">
 
-    <section id="hero" class="hero">
-        <div class="hero-content">
-            <h1 class="glitch" data-text="Evolving AI Biosphere">Evolving AI Biosphere</h1>
-            <p class="subtitle">Where Neural Networks Meet Ecosystem Dynamics</p>
-            <div class="hero-description">
-                <p>A living laboratory combining artificial life, reinforcement learning, and ecological simulation</p>
-            </div>
-            <a href="#overview" class="cta-button">Explore the System</a>
-        </div>
-        <div class="hero-animation">
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
+    <header class="mb-12 border-b border-gray-700 pb-8">
+        <h1 class="text-4xl font-bold mb-4">Evolving AI Biosphere</h1>
+        <p class="text-xl text-gray-400">Technical Deep Dive & Architecture</p>
+    </header>
+
+    <section class="mb-12">
+        <h2 class="text-2xl font-semibold mb-6">Architecture Overview</h2>
+        <div class="mermaid">
+            graph TD
+                subgraph Core_Simulation
+                    Orchestrator[main.py: Orchestrator] -->|Starts| Sim[simulation.py: EcoLifeSimulation]
+                    Orchestrator -->|Manages| Venv[Virtual Environment]
+                    Orchestrator -->|Launches| Ollama[Ollama Serve]
+                    Orchestrator -->|Launches| MLflow[MLflow UI]
+                    Sim -->|Updates| Grid[Game Grid / Cells]
+                    Sim -->|Logs Metrics| MLflow
+                end
+
+                subgraph AI_Components
+                    Sim -->|Queries| GodMode[GodModeAgent (LLM)]
+                    Sim -->|Queries| Council[CouncilSystem (Multi-Agent)]
+                    Council -->|Debates| Gaia[Gaia Agent]
+                    Council -->|Debates| Entropy[Entropy Agent]
+                    Council -->|Decides| Arbiter[Arbiter Agent]
+                    GodMode -->|Tools| SimActions[Spawn/Cull/Env Change]
+                end
+
+                subgraph Biological_Agents
+                    Predator[Predator Hive_Mind (LSTM)]
+                    Herbivore[Herbivore (Local LSTM)]
+                    Predator -->|Shared Learning| HiveMemory[Experience Replay]
+                    Herbivore -->|Individual Learning| LocalWeights[Neural Weights]
+                end
+
+                Sim --> Predator
+                Sim --> Herbivore
         </div>
     </section>
 
-    <section id="overview" class="section">
-        <div class="container">
-            <h2 class="section-title">Core Systems Overview</h2>
-            <p class="section-intro">The simulation is built on five interconnected subsystems working in harmony:</p>
-            
-            <div class="systems-grid">
-                <div class="system-card" data-aos="fade-up">
-                    <div class="card-icon">🧠</div>
-                    <h3>Neural Network Agents</h3>
-                    <p>LSTM policies for intelligent decision-making in organisms</p>
-                </div>
-                
-                <div class="system-card" data-aos="fade-up" data-aos-delay="100">
-                    <div class="card-icon">🗺️</div>
-                    <h3>Cellular Grid System</h3>
-                    <p>50×50 spatial world representation with 2,500 organism capacity</p>
-                </div>
-                
-                <div class="system-card" data-aos="fade-up" data-aos-delay="200">
-                    <div class="card-icon">⚡</div>
-                    <h3>Energy Economy</h3>
-                    <p>Resource flow and metabolism governing survival</p>
-                </div>
-                
-                <div class="system-card" data-aos="fade-up" data-aos-delay="300">
-                    <div class="card-icon">💨</div>
-                    <h3>Chemical Signaling</h3>
-                    <p>Scent diffusion for indirect perception beyond adjacency</p>
-                </div>
-                
-                <div class="system-card" data-aos="fade-up" data-aos-delay="400">
-                    <div class="card-icon">📈</div>
-                    <h3>Reinforcement Learning</h3>
-                    <p>Hive mind training pipeline with REINFORCE algorithm</p>
-                </div>
+    <section class="mb-12">
+        <h2 class="text-2xl font-semibold mb-4">Theoretical Concepts</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="bg-slate-800 p-6 rounded-lg">
+                <h3 class="text-xl font-bold mb-2">Hive Mind Learning (Predators)</h3>
+                <p class="text-gray-300">
+                    Predators do not learn individually. Instead, they share a single <strong>LSTM (Long Short-Term Memory)</strong> policy network.
+                    All predator experiences (State, Action, Reward) are collected into a global buffer. Every 20 generations, the Hive Mind performs a 
+                    <strong>REINFORCE</strong> policy gradient update. This simulates "collective consciousness" or rapid evolutionary adaptation.
+                </p>
+            </div>
+
+            <div class="bg-slate-800 p-6 rounded-lg">
+                <h3 class="text-xl font-bold mb-2">Individual Evolution (Herbivores)</h3>
+                <p class="text-gray-300">
+                    Herbivores possess individual neural networks. When they reproduce, their offspring inherit a copy of the parent's weights 
+                    with slight random mutations (Gaussian noise). This creates a Darwinian natural selection process where "smarter" weights survive.
+                </p>
             </div>
         </div>
     </section>
 
-    <section id="neural" class="section dark-section">
-        <div class="container">
-            <h2 class="section-title">Neural Network Architecture</h2>
-            
-            <div class="architecture-container">
-                <div class="architecture-card">
-                    <h3>🌿 Herbivore/Plant LSTM (CellLSTM)</h3>
-                    <p class="card-subtitle">Per-organism neural network for individual decision-making</p>
-                    
-                    <div class="network-diagram">
-                        <div class="layer">
-                            <h4>Input Layer (8 neurons)</h4>
-                            <ul>
-                                <li>plant_count (0-1)</li>
-                                <li>herbivore_count (0-1)</li>
-                                <li>predator_count (0-1)</li>
-                                <li>nutrient_count (0-1)</li>
-                                <li>energy_level (0-1)</li>
-                                <li>age_factor (0-1)</li>
-                                <li>random_noise_1</li>
-                                <li>random_noise_2</li>
-                            </ul>
-                        </div>
-                        
-                        <div class="arrow">→</div>
-                        
-                        <div class="layer">
-                            <h4>Hidden Layer</h4>
-                            <p>LSTMCell (32 hidden units)</p>
-                            <p class="small-text">Maintains internal state (h, c) across timesteps</p>
-                        </div>
-                        
-                        <div class="arrow">→</div>
-                        
-                        <div class="layer">
-                            <h4>Output Layer (4 neurons)</h4>
-                            <p>Actions with softmax activation:</p>
-                            <ul>
-                                <li>Reproduce</li>
-                                <li>Move</li>
-                                <li>Rest</li>
-                                <li>Default</li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="feature-box">
-                        <h4>🧬 Mutation Mechanism</h4>
-                        <p>During reproduction, offspring neural networks undergo random perturbations:</p>
-                        <ul>
-                            <li>2% probability per weight</li>
-                            <li>Gaussian noise with σ=0.01</li>
-                            <li>Preserves general behavior while enabling evolutionary drift</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="architecture-card">
-                    <h3>🦁 Predator Hive LSTM (PredatorHive)</h3>
-                    <p class="card-subtitle">Shared policy network used by all predators collectively</p>
-                    
-                    <div class="network-diagram">
-                        <div class="layer">
-                            <h4>Input Layer (8 neurons)</h4>
-                            <p>Same observation space as CellLSTM</p>
-                        </div>
-                        
-                        <div class="arrow">→</div>
-                        
-                        <div class="layer">
-                            <h4>Hidden Layer</h4>
-                            <p>LSTMCell (64 hidden units)</p>
-                            <p class="small-text">Fresh state per forward pass during training</p>
-                        </div>
-                        
-                        <div class="arrow">→</div>
-                        
-                        <div class="layer">
-                            <h4>Output Layer (4 neurons)</h4>
-                            <ul>
-                                <li>Reproduce</li>
-                                <li>Move</li>
-                                <li>Rest</li>
-                                <li>Hunt</li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="feature-box highlight">
-                        <h4>🎯 Key Advantage: Shared Network</h4>
-                        <ul>
-                            <li>Predators learn from collective experience</li>
-                            <li>Rare successful strategies spread instantly to all individuals</li>
-                            <li>No need for explicit communication—learning IS the communication</li>
-                            <li>Faster convergence than per-organism evolution</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="training-info">
-                        <h4>Training Pipeline (REINFORCE Algorithm)</h4>
-                        <div class="code-block">
-                            <pre>For each experience (s, a, r):
-  1. Normalize rewards: r_norm = (r - mean(R)) / std(R)
-  2. Compute log probability: log_π(a|s)
-  3. Compute loss: L = -mean(log_π(a|s) · r_norm)
-  4. Backpropagate and update weights</pre>
-                        </div>
-                        <div class="hyperparameters">
-                            <span class="param">Learning rate: 1e-3</span>
-                            <span class="param">Epochs: 8</span>
-                            <span class="param">Batch size: 64</span>
-                            <span class="param">Optimizer: Adam</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <section class="mb-12">
+        <h2 class="text-2xl font-semibold mb-4">Tech Stack</h2>
+        <ul class="list-disc pl-6 space-y-2 text-gray-300">
+            <li><strong>Core:</strong> Python 3.9+, Pygame (Rendering)</li>
+            <li><strong>AI/ML:</strong> PyTorch (Neural Networks), LangChain (LLM Orchestration)</li>
+            <li><strong>LLM Backend:</strong> Ollama (Llama 3.2)</li>
+            <li><strong>Observability:</strong> MLflow (Metrics & Experiment Tracking)</li>
+        </ul>
     </section>
 
-    <section id="grid" class="section">
-        <div class="container">
-            <h2 class="section-title">Spatial Grid System</h2>
-            
-            <div class="grid-info">
-                <div class="info-card">
-                    <h3>Grid Structure</h3>
-                    <div class="spec-grid">
-                        <div class="spec">
-                            <span class="spec-label">World Size</span>
-                            <span class="spec-value">800×800 pixels</span>
-                        </div>
-                        <div class="spec">
-                            <span class="spec-label">Tile Size</span>
-                            <span class="spec-value">16 pixels</span>
-                        </div>
-                        <div class="spec">
-                            <span class="spec-label">Grid Dimensions</span>
-                            <span class="spec-value">50×50 cells</span>
-                        </div>
-                        <div class="spec">
-                            <span class="spec-label">Total Capacity</span>
-                            <span class="spec-value">2,500 organisms</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="info-card">
-                    <h3>Species Parameters</h3>
-                    <table class="species-table">
-                        <thead>
-                            <tr>
-                                <th>Species</th>
-                                <th>Max Energy</th>
-                                <th>Metabolism</th>
-                                <th>Reproduction</th>
-                                <th>Max Age</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="plant-row">
-                                <td>🌱 Plant</td>
-                                <td>150</td>
-                                <td>0.4</td>
-                                <td>130</td>
-                                <td>350</td>
-                            </tr>
-                            <tr class="herbivore-row">
-                                <td>🦌 Herbivore</td>
-                                <td>120</td>
-                                <td>0.9</td>
-                                <td>90</td>
-                                <td>400</td>
-                            </tr>
-                            <tr class="predator-row">
-                                <td>🦁 Predator</td>
-                                <td>140</td>
-                                <td>1.2</td>
-                                <td>100</td>
-                                <td>600</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="energy" class="section dark-section">
-        <div class="container">
-            <h2 class="section-title">Energy System</h2>
-            
-            <div class="energy-flow">
-                <h3>Energy Flow Diagram</h3>
-                <div class="flow-diagram">
-                    <div class="flow-node sun">☀️ Sunlight</div>
-                    <div class="flow-arrow">↓</div>
-                    <div class="flow-node plant">🌱 Plants<br><span class="small">Photosynthesis</span></div>
-                    <div class="flow-arrow">↓</div>
-                    <div class="flow-node herbivore">🦌 Herbivores<br><span class="small">Consumption</span></div>
-                    <div class="flow-arrow">↓</div>
-                    <div class="flow-node predator">🦁 Predators<br><span class="small">Predation</span></div>
-                    <div class="flow-arrow">↓</div>
-                    <div class="flow-node death">💀 Death</div>
-                </div>
-            </div>
-            
-            <div class="energy-calculations">
-                <div class="calc-card">
-                    <h3>🌱 Photosynthesis (Plants)</h3>
-                    <div class="code-block">
-                        <pre>local_light = light_map[x, y] * global_light
-temperature_factor = 1.0 - abs(temperature - 0.5)
-energy_gain = 3.5 * local_light * temperature_factor
-
-Constraints:
-  - light_map: spatial field (0-1)
-  - global_light: (0.3-1.0)
-  - temperature: (0-1), optimal at 0.5</pre>
-                    </div>
-                </div>
-                
-                <div class="calc-card">
-                    <h3>🦌 Herbivore Consumption</h3>
-                    <div class="code-block">
-                        <pre>When herbivore eats plant:
-  energy_transfer = min(plant.energy * 0.9, 60)
-  herbivore.energy += energy_transfer
-  herbivore.energy = min(herbivore.energy, max_energy)
-  plant dies (removed from grid)</pre>
-                    </div>
-                </div>
-                
-                <div class="calc-card">
-                    <h3>🦁 Predator Predation</h3>
-                    <div class="code-block">
-                        <pre>When predator eats herbivore:
-  energy_transfer = min(herbivore.energy * 1.5, 120)
-  predator.energy += energy_transfer
-  predator.energy = min(predator.energy, max_energy)
-  herbivore dies (removed from grid)
-  
-  # Record experience for hive training
-  hive_experiences.append((observation, action=3, reward=energy_transfer))</pre>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="chemical" class="section">
-        <div class="container">
-            <h2 class="section-title">Chemical Signaling (Scent System)</h2>
-            <p class="section-intro">Enables indirect perception—organisms detect resources/threats beyond direct adjacency</p>
-            
-            <div class="scent-system">
-                <div class="scent-info">
-                    <h3>Diffusion Algorithm</h3>
-                    <div class="code-block">
-                        <pre>def diffuse_once(grid, decay=0.85):
-  new_grid = grid * decay
-  
-  for each cell (x, y):
-    share_amount = grid[x, y] * (1 - decay) * 0.25
-    
-    for each neighbor (nx, ny):
-      new_grid[nx, ny] += share_amount
-  
-  return new_grid
-
-# Applied iteratively
-for _ in range(3):  # scent_diffuse_steps
-  plant_scent = diffuse_once(plant_scent, 0.85)
-  herbivore_scent = diffuse_once(herbivore_scent, 0.85)</pre>
-                    </div>
-                </div>
-                
-                <div class="scent-properties">
-                    <h3>Properties</h3>
-                    <div class="property-grid">
-                        <div class="property">
-                            <div class="property-icon">📉</div>
-                            <h4>Decay Rate: 0.85</h4>
-                            <p>15% of scent intensity lost each diffusion step</p>
-                        </div>
-                        <div class="property">
-                            <div class="property-icon">🌊</div>
-                            <h4>Diffusion Steps: 3</h4>
-                            <p>Scent spreads 3 cells outward from source</p>
-                        </div>
-                        <div class="property">
-                            <div class="property-icon">🔄</div>
-                            <h4>Share Factor: 0.25</h4>
-                            <p>Remaining intensity distributed equally to 4 neighbors</p>
-                        </div>
-                        <div class="property">
-                            <div class="property-icon">📊</div>
-                            <h4>Normalization</h4>
-                            <p>Final values scaled to 0-1 for consistent perception</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="environment" class="section dark-section">
-        <div class="container">
-            <h2 class="section-title">Environmental Systems</h2>
-            
-            <div class="env-systems">
-                <div class="env-card">
-                    <h3>☀️ Spatial Light Map</h3>
-                    <p>Creates organic light patches resembling forest canopy or underwater zones</p>
-                    <div class="env-details">
-                        <div class="detail">
-                            <strong>Generation:</strong> Base vertical gradient + sinusoidal patterns
-                        </div>
-                        <div class="detail">
-                            <strong>Bright Zones (light > 0.7):</strong> Plants thrive
-                        </div>
-                        <div class="detail">
-                            <strong>Dark Zones (light < 0.18):</strong> Energy penalties and increased death risk
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="env-card">
-                    <h3>🌡️ Temperature</h3>
-                    <div class="param-info">
-                        <div class="param-detail">
-                            <span class="label">Range:</span>
-                            <span class="value">0.0 (cold) to 1.0 (hot)</span>
-                        </div>
-                        <div class="param-detail">
-                            <span class="label">Update:</span>
-                            <span class="value">Random walk ± 0.02 per cycle</span>
-                        </div>
-                        <div class="param-detail">
-                            <span class="label">Effect:</span>
-                            <span class="value">Multiplies metabolism rates</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="env-card">
-                    <h3>💡 Global Light</h3>
-                    <div class="param-info">
-                        <div class="param-detail">
-                            <span class="label">Range:</span>
-                            <span class="value">0.3 (dim) to 1.0 (bright)</span>
-                        </div>
-                        <div class="param-detail">
-                            <span class="label">Update:</span>
-                            <span class="value">Random walk ± 0.03 per cycle</span>
-                        </div>
-                        <div class="param-detail">
-                            <span class="label">Effect:</span>
-                            <span class="value">Multiplies photosynthesis</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="theory" class="section">
-        <div class="container">
-            <h2 class="section-title">Theoretical Foundations</h2>
-            
-            <div class="theory-grid">
-                <div class="theory-card">
-                    <h3>📐 Lotka-Volterra Dynamics</h3>
-                    <p>The predator-prey oscillations observed follow modified Lotka-Volterra equations:</p>
-                    <div class="code-block">
-                        <pre>dP/dt = αP - βPH        (plants grow, eaten by herbivores)
-dH/dt = δβPH - γH - ζHR (herbivores eat plants, die naturally, eaten by predators)
-dR/dt = εζHR - λR       (predators eat herbivores, die naturally)
-
-Where:
-  P = plant population
-  H = herbivore population
-  R = predator population
-  α = plant growth rate (photosynthesis)
-  β = herbivore predation rate on plants</pre>
-                    </div>
-                    <p class="highlight-text">Unlike classical Lotka-Volterra, learning introduces non-constant coefficients—oscillations gradually dampen as the system learns stable equilibrium.</p>
-                </div>
-                
-                <div class="theory-card">
-                    <h3>🎓 Reinforcement Learning Framework</h3>
-                    <p>The predator hive implements a REINFORCE policy gradient algorithm:</p>
-                    <div class="code-block">
-                        <pre>π(a|s; θ): Policy network (parameterized by θ)
-J(θ) = E[Σ γᵗ r_t]: Expected cumulative reward
-∇J(θ) = E[∇ log π(a|s; θ) * R]: Policy gradient
-
-Update rule:
-θ ← θ + α * ∇J(θ)</pre>
-                    </div>
-                    <div class="advantages">
-                        <h4>Advantages of REINFORCE:</h4>
-                        <ul>
-                            <li>Simple implementation (single network, no value function)</li>
-                            <li>Works with continuous high-dimensional state spaces</li>
-                            <li>Naturally handles stochastic policies</li>
-                            <li>Suitable for episodic tasks (hunt = episode)</li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <div class="theory-card evolution-card">
-                    <h3>🧬 Evolution vs. Learning</h3>
-                    <div class="comparison">
-                        <div class="comp-side">
-                            <h4>Phylogenetic (Evolutionary)</h4>
-                            <ul>
-                                <li>Herbivore neural weights mutate across generations</li>
-                                <li>Selection pressure: organisms with better weights survive longer</li>
-                                <li>Timescale: 50-200 generations</li>
-                                <li>Mechanism: Variation (mutation) + Selection (survival)</li>
-                            </ul>
-                        </div>
-                        <div class="comp-side">
-                            <h4>Ontogenetic (Learning)</h4>
-                            <ul>
-                                <li>Predator hive updates weights through gradient descent</li>
-                                <li>Improvement within single generation's lifetime</li>
-                                <li>Timescale: 20 generations (one training cycle)</li>
-                                <li>Mechanism: Error backpropagation + experience replay</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="baldwin-effect">
-                        <strong>Baldwin Effect:</strong> Learning can guide evolution—predators that learn to hunt successfully reproduce more, increasing the "learnability" of the hive over time.
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="conclusion" class="section conclusion-section">
-        <div class="container">
-            <h2 class="section-title">Key Takeaways</h2>
-            
-            <div class="takeaways">
-                <div class="takeaway">
-                    <div class="takeaway-icon">⚡</div>
-                    <p>Energy is the fundamental currency driving all behavior</p>
-                </div>
-                <div class="takeaway">
-                    <div class="takeaway-icon">⏱️</div>
-                    <p>Learning and evolution operate on different timescales but interact</p>
-                </div>
-                <div class="takeaway">
-                    <div class="takeaway-icon">💥</div>
-                    <p>Extinction cascades can wipe out entire ecosystems rapidly</p>
-                </div>
-                <div class="takeaway">
-                    <div class="takeaway-icon">🗺️</div>
-                    <p>Spatial structure creates ecological niches</p>
-                </div>
-                <div class="takeaway">
-                    <div class="takeaway-icon">🧠</div>
-                    <p>Shared intelligence enables rapid species-level adaptation</p>
-                </div>
-                <div class="takeaway">
-                    <div class="takeaway-icon">🌀</div>
-                    <p>Emergent complexity arises from simple local interactions</p>
-                </div>
-            </div>
-            
-            <div class="final-message">
-                <h3>AI Biosphere represents a unique intersection of artificial life, reinforcement learning, and ecological simulation.</h3>
-                <p>By combining neural network agents with emergent ecosystem dynamics, it creates a living laboratory for studying adaptation, cooperation, and survival strategies.</p>
-                <p class="cta-text">Experiment, observe, and discover the unexpected patterns that emerge when artificial organisms learn to survive in a dynamic world.</p>
-                <div class="author-credit">
-                    <p>Created by <strong>Vivek Dagar</strong></p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-brand">
-                    <h3>🧬 Evolving AI Biosphere</h3>
-                    <p>Technical Documentation</p>
-                </div>
-                <div class="footer-info">
-                    <p><strong>Created by:</strong> Vivek Dagar</p>
-                    <p>Version 1.0 | November 2025</p>
-                    <p>Educational/Research Use</p>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>© 2025 Vivek Dagar. All rights reserved.</p>
-            </div>
-        </div>
+    <footer class="text-center text-gray-500 mt-20">
+        <p>Generated by Evolving AI Biosphere</p>
     </footer>
 
-    <script src="script.js"></script>
 </body>
 </html>
