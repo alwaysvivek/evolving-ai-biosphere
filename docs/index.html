@@ -1,98 +1,217 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Evolving AI Biosphere - Technical Documentation</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script type="module">
-        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
-    </script>
+    <title>AI Biosphere - Technical Documentation</title>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #e2e8f0; }
-        h1, h2, h3 { color: #38bdf8; }
-        .mermaid { background: #1e293b; padding: 20px; border-radius: 8px; }
-        code { background: #334155; padding: 2px 6px; border-radius: 4px; color: #a5f3fc; }
+        :root {
+            --bg: #0f172a;
+            --text: #e2e8f0;
+            --accent: #38bdf8;
+            --secondary: #94a3b8;
+            --card: #1e293b;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background: var(--bg);
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: var(--accent);
+            margin-top: 2.5rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 1rem;
+        }
+
+        code {
+            background: #334155;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background: #020617;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            border: 1px solid #334155;
+        }
+
+        .card {
+            background: var(--card);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            border: 1px solid #334155;
+        }
+
+        .mermaid {
+            background: #fff;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+
+        footer {
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid #334155;
+            color: var(--secondary);
+            text-align: center;
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true });</script>
 </head>
-<body class="p-8 max-w-5xl mx-auto">
 
-    <header class="mb-12 border-b border-gray-700 pb-8">
-        <h1 class="text-4xl font-bold mb-4">Evolving AI Biosphere</h1>
-        <p class="text-xl text-gray-400">Technical Deep Dive & Architecture</p>
-    </header>
+<body>
 
-    <section class="mb-12">
-        <h2 class="text-2xl font-semibold mb-6">Architecture Overview</h2>
-        <div class="mermaid">
-            graph TD
-                subgraph Core_Simulation
-                    Orchestrator[main.py: Orchestrator] -->|Starts| Sim[simulation.py: EcoLifeSimulation]
-                    Orchestrator -->|Manages| Venv[Virtual Environment]
-                    Orchestrator -->|Launches| Ollama[Ollama Serve]
-                    Orchestrator -->|Launches| MLflow[MLflow UI]
-                    Sim -->|Updates| Grid[Game Grid / Cells]
-                    Sim -->|Logs Metrics| MLflow
-                end
+    <h1>🌍 Evolving AI Biosphere</h1>
+    <p class="intro">
+        Welcome to the technical documentation for the Evolving AI Biosphere. This project is a research-grade
+        simulation exploring
+        <strong>Multi-Agent Reinforcement Learning (MARL)</strong> and <strong>Evolutionary Algorithms</strong> in a
+        continuous environment.
+    </p>
 
-                subgraph AI_Components
-                    Sim -->|Queries| GodMode[GodModeAgent (LLM)]
-                    Sim -->|Queries| Council[CouncilSystem (Multi-Agent)]
-                    Council -->|Debates| Gaia[Gaia Agent]
-                    Council -->|Debates| Entropy[Entropy Agent]
-                    Council -->|Decides| Arbiter[Arbiter Agent]
-                    GodMode -->|Tools| SimActions[Spawn/Cull/Env Change]
-                end
+    <div class="card">
+        <h3>🚀 Quick Start</h3>
+        <p>1. <code>./setup_env.sh</code> (Install dependencies)</p>
+        <p>2. <code>python3 launch_services.py</code> (Start MLflow & Monitor Ollama)</p>
+        <p>3. <code>python3 simulation.py</code> (Run the simulation)</p>
+    </div>
 
-                subgraph Biological_Agents
-                    Predator[Predator Hive_Mind (LSTM)]
-                    Herbivore[Herbivore (Local LSTM)]
-                    Predator -->|Shared Learning| HiveMemory[Experience Replay]
-                    Herbivore -->|Individual Learning| LocalWeights[Neural Weights]
-                end
+    <h2>1. System Architecture</h2>
+    <p>The system is composed of three decoupled layers: The Simulation Core, The Intelligence Layer, and The
+        Observability Layer.</p>
 
-                Sim --> Predator
-                Sim --> Herbivore
-        </div>
-    </section>
+    <div class="mermaid">
+        graph TD
+        User[User Input] -->|Control| Sim[Simulation Core (Pygame)]
 
-    <section class="mb-12">
-        <h2 class="text-2xl font-semibold mb-4">Theoretical Concepts</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div class="bg-slate-800 p-6 rounded-lg">
-                <h3 class="text-xl font-bold mb-2">Hive Mind Learning (Predators)</h3>
-                <p class="text-gray-300">
-                    Predators do not learn individually. Instead, they share a single <strong>LSTM (Long Short-Term Memory)</strong> policy network.
-                    All predator experiences (State, Action, Reward) are collected into a global buffer. Every 20 generations, the Hive Mind performs a 
-                    <strong>REINFORCE</strong> policy gradient update. This simulates "collective consciousness" or rapid evolutionary adaptation.
-                </p>
-            </div>
+        subgraph "Simulation Layer (60 FPS)"
+        Sim -->|State Checks| Grid[Entity Grid]
+        Grid -->|Updates| Plant[Plants (Cellular Automata)]
+        Grid -->|Updates| Herbivore[Herbivores (Genetic Algo)]
+        Grid -->|Updates| Predator[Predators (RL Agents)]
+        end
 
-            <div class="bg-slate-800 p-6 rounded-lg">
-                <h3 class="text-xl font-bold mb-2">Individual Evolution (Herbivores)</h3>
-                <p class="text-gray-300">
-                    Herbivores possess individual neural networks. When they reproduce, their offspring inherit a copy of the parent's weights 
-                    with slight random mutations (Gaussian noise). This creates a Darwinian natural selection process where "smarter" weights survive.
-                </p>
-            </div>
-        </div>
-    </section>
+        subgraph "Intelligence Layer (Async)"
+        Predator -->|Experience Batch| Hive[Hive Mind (LSTM)]
+        Hive -->|Gradient Updates| Predator
+        Sim -->|Natural Language| God[God Mode Agent (Ollama)]
+        end
 
-    <section class="mb-12">
-        <h2 class="text-2xl font-semibold mb-4">Tech Stack</h2>
-        <ul class="list-disc pl-6 space-y-2 text-gray-300">
-            <li><strong>Core:</strong> Python 3.9+, Pygame (Rendering)</li>
-            <li><strong>AI/ML:</strong> PyTorch (Neural Networks), LangChain (LLM Orchestration)</li>
-            <li><strong>LLM Backend:</strong> Ollama (Llama 3.2)</li>
-            <li><strong>Observability:</strong> MLflow (Metrics & Experiment Tracking)</li>
+        subgraph "Observability Layer (Port 5001)"
+        Sim -->|Log Metrics| MLflow[MLflow Server]
+        end
+    </div>
+
+    <h2>2. Evolutionary Mechanisms</h2>
+
+    <h3>🧠 The Predator Hive Mind (Deep RL)</h3>
+    <p>Predators do not learn individually; they share a collective brain (a PyTorch LSTM). This allows for rapid
+        adaptation across the entire species.</p>
+    <ul>
+        <li><strong>Architecture:</strong> LSTM (Long Short-Term Memory) network taking 8 inputs (local vision) and
+            outputting 4 continuous probabilities (Move Up, Down, Left, Right).</li>
+        <li><strong>Training:</strong> Uses <strong>REINFORCE (Policy Gradient)</strong>. Every 20 generations, a batch
+            of "experiences" (State, Action, Reward) is sampled from the Hive buffer to update the network weights.</li>
+        <li><strong>Reward Function:</strong> +1.0 for eating prey, -0.1 for starvation per tick, -5.0 for death.</li>
+    </ul>
+
+    <h3>🧬 Herbivore Genetics (Evolutionary Algorithm)</h3>
+    <p>Herbivores possess individual "genomes" consisting of weights for a simple feed-forward neural network. They
+        evolve via natural selection.</p>
+    <ul>
+        <li><strong>Reproduction:</strong> Asexual reproduction occurs when energy > threshold.</li>
+        <li><strong>Mutation:</strong> Offspring inherit parent weights with a random Gaussian noise (mutation rate =
+            0.05).</li>
+        <li><strong>Selection Pressure:</strong> Only those successful at finding food (plants) survive long enough to
+            reproduce, naturally selecting for efficient foraging behaviors.</li>
+        <li><strong>Photosynthetic Adaptability:</strong> In the absence of plants, Herbivores can technically sustain
+            themselves by "resting" in high-light environments, gaining energy directly from the sun (simulating
+            metabolic efficiency/basking).</li>
+    </ul>
+
+    <h2>3. DETAILED BIO-MECHANICS (The "Hidden" Rules)</h2>
+    <div class="card">
+        <h3>🌱 Plants</h3>
+        <ul>
+            <li><strong>Growth Formula:</strong> <code>Energy += 3.5 * LocalLight * GlobalLight * TempFactor</code></li>
+            <li><strong>Reproduction:</strong> Requires <code>Energy > 130</code>. Splits energy in half to create
+                offspring.</li>
+            <li><strong>Death:</strong> Dies if <code>Energy <= 0</code> (starvation) or eaten.</li>
         </ul>
-    </section>
 
-    <footer class="text-center text-gray-500 mt-20">
-        <p>Generated by Evolving AI Biosphere</p>
+        <h3>🐑 Herbivores</h3>
+        <ul>
+            <li><strong>Action Space:</strong> Move (Cost: 1.0), Rest (Gain: Variable), Eat (Gain: Plant Energy * 0.9).
+            </li>
+            <li><strong>Metabolic Basking:</strong> If choosing the "Rest" action, they gain energy:
+                <code>6.0 * Light * TempFactor</code>. This allows survival even during plant extinction events if
+                conditions are perfect.
+            </li>
+            <li><strong>Reproduction:</strong> Requires <code>Energy > Threshold</code>. Asexual cloning with mutation.
+            </li>
+        </ul>
+
+        <h3>🐺 Predators</h3>
+        <ul>
+            <li><strong>The Hive Mind:</strong> All predators share <strong>ONE</strong> neural network. They do not
+                evolve individually.</li>
+            <li><strong>Hunting Reward:</strong> <code>Energy += TargetEnergy * 1.5</code> (Max 120).</li>
+            <li><strong>Starvation:</strong> Losing -1.2 energy per tick. Death at 0 energy (-5.0 Reward penalty to
+                Hive).</li>
+        </ul>
+    </div>
+
+    <h2>4. The "God Mode" Interface</h2>
+    <p>The simulation integrates a local LLM (Llama 3.2 via Ollama) to allow natural language control. Instead of
+        clicking buttons, you can type commands like:</p>
+    <pre><code>"Spawn a swarm of 20 predators in the top corner"
+"Trigger a drought event (reduce plant growth)"
+"Kill 50% of the herbivores to balance the population"</code></pre>
+    <p>The system uses <strong>Function Calling</strong> to parse these intents and execute the corresponding Simulation
+        API methods.</p>
+
+    <h2>5. Service Orchestration</h2>
+    <p>To keep the simulation lightweight, heavy services run in the background. The <code>launch_services.py</code>
+        script orchestrates this:</p>
+    <ul>
+        <li><strong>MLflow (Port 5001):</strong> Logs population stats, energy levels, and extinction events.</li>
+        <li><strong>Ollama (Port 11434):</strong> Hosts the Llama 3.2 model for the God Mode agent.</li>
+    </ul>
+
+    <footer>
+        <p>Documentation for <em>Evolving AI Biosphere</em> | &copy; 2026 Vivek Dagar</p>
     </footer>
 
 </body>
+
 </html>
