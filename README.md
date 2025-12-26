@@ -38,20 +38,20 @@ A self-evolving digital ecosystem where AI organisms fight for survival, powered
 ```mermaid
 graph TD
     User[User] -->|Run| Launcher[launch_services.py]
-    Launcher -->|Spawns| Ollama[Ollama Service<br/>(Port 11434)]
-    Launcher -->|Spawns| MLflow[MLflow UI<br/>(Port 5001)]
+    Launcher -->|Spawns| Ollama["Ollama Service<br/>(Port 11434)"]
+    Launcher -->|Spawns| MLflow["MLflow UI<br/>(Port 5001)"]
     
     User -->|Run| Sim[simulation.py]
     
     subgraph Ecosystem
-        Sim -->|Updates| Grid[Game Grid (Pygame)]
-        Sim -->|Queries| GodMode[God Mode Agent]
+        Sim -->|Updates| Grid["Game Grid (Pygame)"]
+        Sim -->|Queries| GodMode["God Mode Agent"]
         GodMode -.->|API Call| Ollama
     end
     
     subgraph Agents
-        Predators[Predator Hive<br/>(Shared LSTM Brain)]
-        Herbivores[Herbivore Agents<br/>(Individual Genomes)]
+        Predators["Predator Hive<br/>(Shared LSTM Brain)"]
+        Herbivores["Herbivore Agents<br/>(Individual Genomes)"]
     end
     
     Predators -->|Action| Grid
