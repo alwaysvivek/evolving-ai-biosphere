@@ -115,27 +115,7 @@
     <p>The system is composed of three decoupled layers: The Control Plane, The Simulation Core, and The Intelligence
         Layer.</p>
 
-    <div class="mermaid">
-        graph TD
-        User[User Input] -->|Control| Sim["Simulation Core (Pygame)"]
 
-        subgraph "Simulation Layer"
-        Sim -->|State Checks| Grid["Entity Grid"]
-        Grid -->|Updates| Plant["Plants (CA)"]
-        Grid -->|Updates| Herbivore["Herbivores (Genetic Rules)"]
-        Grid -->|Updates| Predator["Predators (RL Agents)"]
-        end
-
-        subgraph "Intelligence Layer"
-        Predator -->|Experiences| Hive["Hive Mind (PyTorch LSTM)"]
-        Hive -->|Weight Updates| Predator
-        Sim -->|Natural Language| God["God Mode Agent (Ollama)"]
-        end
-
-        subgraph "Observability Layer"
-        Sim -->|Log Metrics| MLflow["MLflow Server (Port 5001)"]
-        end
-    </div>
 
     <h2>2. Entity Biology & Mechanics</h2>
 
@@ -249,27 +229,7 @@
     </ul>
 
     <h2>6. Tech Stack & Library Usage</h2>
-    <div class="mermaid">
-        graph LR
-        subgraph "Core Simulation"
-        Pygame["Pygame"] --> Render["Rendering (60 FPS)"]
-        Pygame --> Input["Input & Hotkeys"]
-        NumPy["NumPy"] --> Physics["Scent Diffusion & Tensors"]
-        NumPy --> State["Grid State Management"]
-        end
 
-        subgraph "Artificial Intelligence"
-        PyTorch["PyTorch"] --> LSTM["Predator Hive Mind (LSTM)"]
-        PyTorch --> Grad["Policy Gradient (REINFORCE)"]
-        LangChain["LangChain / LangGraph"] --> Agent["God Mode Agent Control"]
-        Ollama["Ollama"] --> LLM["Llama 3.2 Inference"]
-        end
-
-        subgraph "DevOps & MLOps"
-        MLflow["MLflow"] --> Metrics["Live Experiment Tracking"]
-        Subprocess["Subprocess"] --> Orch["Service Orchestration"]
-        end
-    </div>
 
     <footer>
         <p><strong>Evolving AI Biosphere</strong> | Built with Python, Pygame, PyTorch, & LangChain.</p>

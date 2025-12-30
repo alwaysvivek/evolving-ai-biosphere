@@ -31,6 +31,28 @@ A self-evolving digital ecosystem where AI organisms fight for survival, powered
 | **Inference** | Ollama | Local LLM serving (Llama 3.2) for God Mode control. |
 | **Observability** | MLflow | Real-time experiment tracking and metric logging (Port 5001). |
 
+```mermaid
+graph LR
+    subgraph "Core Simulation"
+    Pygame["Pygame"] --> Render["Rendering (60 FPS)"]
+    Pygame --> Input["Input & Hotkeys"]
+    NumPy["NumPy"] --> Physics["Scent Diffusion & Tensors"]
+    NumPy --> State["Grid State Management"]
+    end
+
+    subgraph "Artificial Intelligence"
+    PyTorch["PyTorch"] --> LSTM["Predator Hive Mind (LSTM)"]
+    PyTorch --> Grad["Policy Gradient (REINFORCE)"]
+    LangChain["LangChain / LangGraph"] --> Agent["God Mode Agent Control"]
+    Ollama["Ollama"] --> LLM["Llama 3.2 Inference"]
+    end
+
+    subgraph "DevOps & MLOps"
+    MLflow["MLflow"] --> Metrics["Live Experiment Tracking"]
+    Subprocess["Subprocess"] --> Orch["Service Orchestration"]
+    end
+```
+
 ---
 
 ## 🧩 Architecture
