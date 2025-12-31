@@ -206,6 +206,8 @@ The AI-driven evolution leads to realistic ecological dynamics:
 | **SPACE** | Play/Pause simulation |
 | **C** | Clear all organisms |
 | **R** | Generate statistical report |
+| **A** | Generate ML-powered analytics report |
+| **X** | Export data to CSV |
 | **T** | Toggle Hive training |
 | **F** | Spawn flower pattern |
 | **S** | Spawn spiral formation |
@@ -216,6 +218,57 @@ The AI-driven evolution leads to realistic ecological dynamics:
 | **P** | Kill all plants |
 | **E** | Scarcity event |
 | **Q** | Quit simulation |
+
+---
+
+## 📊 ML-Powered Analytics
+
+The simulation now includes comprehensive **machine learning analytics** using **Pandas** and **Scikit-learn**:
+
+### Features:
+- **Time-Series Analysis**: Track population dynamics, diversity scores, and environmental conditions across generations
+- **Statistical Metrics**: Comprehensive summary statistics including means, correlations, and variance
+- **Behavior Clustering**: K-means clustering to identify distinct organism behavior patterns
+- **Population Trend Analysis**: Detect boom-bust cycles and population trends
+- **Crash Prediction**: Linear regression to predict population crashes before they occur
+- **Data Export**: Export all collected data to CSV for external analysis
+
+### Usage:
+1. Press **A** during simulation to generate a comprehensive analytics report
+2. Press **X** to export all data to CSV files in the `analytics_output/` directory
+3. Data is automatically logged every 5 generations for efficiency
+
+### What's Analyzed:
+- **Species populations** over time (plants, herbivores, predators)
+- **Diversity metrics** (Shannon entropy)
+- **Environmental conditions** (temperature, light)
+- **Behavior patterns** (actions, energy levels, rewards)
+- **Population correlations** between species
+- **Extinction events** and their impacts
+
+### Example Output:
+```
+ECOSYSTEM ANALYTICS REPORT
+================================================================================
+### SUMMARY STATISTICS ###
+Total Generations: 100
+Population - Max: 350, Avg: 287.5, Min: 45
+Average Diversity Score: 0.823
+
+### POPULATION TRENDS ###
+Plants: stable
+Herbivores: decreasing
+Predators: increasing
+
+### BEHAVIOR CLUSTERING ###
+Total Behaviors Analyzed: 1543
+Silhouette Score: 0.641
+Cluster 0: Size=512, Type=Predator, Action=Hunt/Eat, AvgEnergy=85.3
+
+### POPULATION CRASH PREDICTIONS ###
+Herbivores: ⚠️ CRASH LIKELY
+  Current: 45, Predicted: 12.3, Trend: -2.15/gen
+```
 
 ---
 
@@ -247,6 +300,23 @@ The AI-driven evolution leads to realistic ecological dynamics:
 - Python 3.7+  
 - Basic GPU/CPU for 800×800 rendering (30 FPS)  
 
+### 🛠️ **Technology Stack**
+
+This project demonstrates proficiency in:
+- **Python** - Core programming language
+- **PyTorch** - Deep learning framework for LSTM networks
+- **NumPy** - Numerical computing and array operations
+- **Pandas** - Data analysis and time-series logging
+- **Scikit-learn** - ML algorithms (K-means clustering, linear regression)
+- **Pygame** - Real-time visualization and interaction
+
+**Machine Learning Techniques:**
+- LSTM Neural Networks for organism decision-making
+- REINFORCE (Policy Gradient) for predator hive training
+- K-means Clustering for behavior pattern identification
+- Linear Regression for population crash prediction
+- Statistical analysis and model evaluation metrics
+
 ---
 
 ### 📦 **Installation**
@@ -255,13 +325,24 @@ The AI-driven evolution leads to realistic ecological dynamics:
    ```bash
    git clone https://github.com/<your-username>/evolving-ai-biosphere.git
    cd evolving-ai-biosphere
+   ```
+
 2. **Install dependencies**
    ```bash
-    pip3 install -r requirements.txt
+   pip3 install -r requirements.txt
    ```
-3. Run simulation
+   
+   This will install:
+   - `pygame` - Visualization
+   - `torch` - Deep learning
+   - `numpy` - Numerical computing
+   - `pandas` - Data analysis
+   - `scikit-learn` - ML algorithms
+   - `matplotlib` - Plotting support
+
+3. **Run simulation**
    ```bash
-     python3 main.py
+   python3 main.py
    ```
 
 ### ▶️ Running the Simulation

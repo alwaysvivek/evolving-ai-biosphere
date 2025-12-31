@@ -1,6 +1,6 @@
 # ai_ecosphere_hive.py
-# Requires: pygame, torch, numpy
-# pip install pygame torch numpy
+# Requires: pygame, torch, numpy, pandas, scikit-learn
+# pip install pygame torch numpy pandas scikit-learn matplotlib
 import pygame
 import random
 import numpy as np
@@ -11,6 +11,8 @@ from collections import defaultdict, deque
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from analytics import EcosystemAnalytics
 
 
 # ------- Utilities -------
@@ -380,6 +382,11 @@ class EcoLifeSimulation:
         self.extinction_events = []
         self.trend_history = deque(maxlen=50)
 
+        # Analytics system
+        self.analytics = EcosystemAnalytics()
+        self.analytics_enabled = True
+        self.analytics_log_interval = 5  # Log every N generations
+
         # Key bindings shown at start
         self.print_bindings()
 
@@ -392,6 +399,8 @@ class EcoLifeSimulation:
         print("N     - Spawn nutrient field")
         print("C     - Clear")
         print("R     - Print report")
+        print("A     - Analytics report (ML-powered)")
+        print("X     - Export data to CSV")
         print("T     - Toggle predator training ON/OFF (training runs automatically when ON)")
         print("E     - Trigger scarcity event")
         print("K     - Kill predators")
@@ -725,6 +734,10 @@ class EcoLifeSimulation:
                 # use hive to get sampled action index
                 probs, action_idx = self.hive.act_np(obs_vec)
 
+                # Log behavior for analytics
+                if self.analytics_enabled and random.random() < 0.1:  # Sample 10% for efficiency
+                    self.analytics.log_behavior(cell.type, action_idx, cell.energy, cell.age, 0.0)
+
                 # action logic similar to before but predator uses hive for decision
                 if action_idx == 0 and cell.energy > cell.reproduction_threshold:
                     empty = [n for n in self.get_neighbors(pos) if
@@ -764,6 +777,9 @@ class EcoLifeSimulation:
                             self.stats['total_deaths'] += 1
                             # add experience: reward proportional to energy_gain (un-normalized)
                             self.hive_experiences.append((obs_vec, 3, float(energy_gain)))
+                            # Log successful hunt behavior with reward
+                            if self.analytics_enabled:
+                                self.analytics.log_behavior(cell.type, action_idx, cell.energy, cell.age, float(energy_gain))
                         else:
                             # nothing eaten
                             pass
@@ -791,6 +807,9 @@ class EcoLifeSimulation:
                         cell.draw_pos = np.array([escape_to[0], escape_to[1]], dtype=float)
                         # MODIFIED: Increased escape energy cost
                         cell.energy -= 2.5
+                        # Log escape behavior
+                        if self.analytics_enabled and random.random() < 0.1:
+                            self.analytics.log_behavior(cell.type, 1, cell.energy, cell.age, -2.5)
                     else:
                         # if can't move away, try to hunt (eat plant) if adjacent
                         eaten = False
@@ -804,6 +823,9 @@ class EcoLifeSimulation:
                                 current_plant_count -= 1  # Decrement if a plant is eaten
                                 self.stats['total_deaths'] += 1
                                 eaten = True
+                                # Log eating behavior
+                                if self.analytics_enabled:
+                                    self.analytics.log_behavior(cell.type, 3, cell.energy, cell.age, float(energy_gain))
                                 break
                         if not eaten:
                             cell.energy -= 0.8
@@ -813,6 +835,10 @@ class EcoLifeSimulation:
                         action_idx, probs = cell.high_level_action(neighbor_info)
                     else:
                         action_idx = random.randrange(4)
+
+                    # Log behavior for analytics
+                    if self.analytics_enabled and random.random() < 0.1:
+                        self.analytics.log_behavior(cell.type, action_idx, cell.energy, cell.age, 0.0)
 
                     if action_idx == 0 and cell.energy > cell.reproduction_threshold:
                         empty = [n for n in self.get_neighbors(pos) if
@@ -939,6 +965,19 @@ class EcoLifeSimulation:
         # maybe train hive
         self.maybe_train_hive()
 
+        # Analytics logging
+        if self.analytics_enabled and self.generation % self.analytics_log_interval == 0:
+            diversity = self.species_diversity_score()
+            self.analytics.log_generation(
+                self.generation,
+                self.cells,
+                self.stats,
+                self.temperature,
+                self.light,
+                diversity,
+                len(self.hive_experiences)
+            )
+
     def species_diversity_score(self):
         counts = defaultdict(int)
         for c in self.cells.values(): counts[c.type] += 1
@@ -1061,6 +1100,16 @@ class EcoLifeSimulation:
                                              random.randint(8, self.grid_height - 10))
                 elif event.key == pygame.K_r:
                     self.generate_report()
+                elif event.key == pygame.K_a:
+                    # Analytics report
+                    print("\n" + self.analytics.generate_report())
+                elif event.key == pygame.K_x:
+                    # Export data to CSV
+                    try:
+                        csv_path = self.analytics.export_to_csv()
+                        print(f"✅ Data exported successfully to {csv_path}!")
+                    except Exception as e:
+                        print(f"❌ Error exporting data: {e}")
                 elif event.key == pygame.K_t:
                     self.training_enabled = not getattr(self, 'training_enabled', True)
                     print("[Hive] Training toggled to", self.training_enabled)
@@ -1094,6 +1143,9 @@ class EcoLifeSimulation:
             print(f"EXTINCTION EVENT: Killed {killed} {species_names[species_type]}")
             self.stats['total_deaths'] += killed
             self.extinction_events.append((self.generation, f"Killed {killed} {species_names[species_type]}"))
+            # Log extinction to analytics
+            if self.analytics_enabled:
+                self.analytics.log_extinction(self.generation, species_names[species_type], killed)
 
     def generate_report(self):
         counts = defaultdict(int)
