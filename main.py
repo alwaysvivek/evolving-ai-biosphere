@@ -174,7 +174,7 @@ class TransformerDecisionModel(nn.Module):
         
         # Initialize weights
         for name, p in self.named_parameters():
-            if 'weight' in name:
+            if 'weight' in name and p.dim() >= 2:
                 nn.init.xavier_uniform_(p)
             elif 'bias' in name:
                 nn.init.zeros_(p)

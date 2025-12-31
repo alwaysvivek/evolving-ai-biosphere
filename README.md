@@ -232,11 +232,15 @@ The simulation now includes comprehensive **machine learning analytics** using *
 - **Population Trend Analysis**: Detect boom-bust cycles and population trends
 - **Crash Prediction**: Linear regression to predict population crashes before they occur
 - **Data Export**: Export all collected data to CSV for external analysis
+- **🆕 Vector Database**: FAISS-powered behavior embedding similarity search for finding similar behaviors
+- **🆕 Transformer Attention**: Attention-based organism decision models as alternative to LSTM
+- **🆕 RAGAS-Style Evaluation**: Automated ecosystem quality evaluation with health, diversity, stability, behavioral quality, and resilience scores
 
 ### Usage:
-1. Press **A** during simulation to generate a comprehensive analytics report
+1. Press **A** during simulation to generate a comprehensive analytics report (or wait for auto-report every 20 generations)
 2. Press **X** to export all data to CSV files in the `analytics_output/` directory
 3. Data is automatically logged every 5 generations for efficiency
+4. **🆕 Analytics reports are now AUTO-GENERATED every 20 generations!** No need to press 'A' anymore.
 
 ### What's Analyzed:
 - **Species populations** over time (plants, herbivores, predators)
@@ -245,6 +249,8 @@ The simulation now includes comprehensive **machine learning analytics** using *
 - **Behavior patterns** (actions, energy levels, rewards)
 - **Population correlations** between species
 - **Extinction events** and their impacts
+- **🆕 Behavior embeddings** stored in vector database for similarity search
+- **🆕 Ecosystem quality scores** using RAGAS-style automated evaluation
 
 ### Example Output:
 ```
@@ -268,7 +274,48 @@ Cluster 0: Size=512, Type=Predator, Action=Hunt/Eat, AvgEnergy=85.3
 ### POPULATION CRASH PREDICTIONS ###
 Herbivores: ⚠️ CRASH LIKELY
   Current: 45, Predicted: 12.3, Trend: -2.15/gen
+
+### VECTOR DATABASE STATISTICS ###
+Total Behaviors Stored: 1543
+Embedding Dimension: 128
+FAISS Enabled: Yes
+
+### BEHAVIOR SIMILARITY SEARCH ###
+Query: Predator - Hunt/Eat (Energy: 85.3)
+  Similar 1 (dist=0.002): Predator - Hunt/Eat (Energy: 87.1, Age: 45, Reward: 12.00)
+  Similar 2 (dist=0.005): Predator - Hunt/Eat (Energy: 83.2, Age: 52, Reward: 10.50)
+
+### AUTOMATED ECOSYSTEM EVALUATION ###
+Overall Score: 72.5/100 (C)
+  Health:             85.2/100
+  Diversity:          82.3/100
+  Stability:          65.1/100
+  Behavioral Quality: 68.4/100
+  Resilience:         61.5/100
 ```
+
+### New AI Features:
+
+#### 🔍 Vector Database for Behavior Similarity
+The system now uses **FAISS** (Facebook AI Similarity Search) to store behavior embeddings and perform fast similarity searches. This allows you to find organisms with similar behaviors based on their actions, energy levels, age, and rewards.
+
+#### 🤖 Transformer Attention Models
+Organisms can now use **Transformer-based attention mechanisms** instead of just LSTM for decision-making. The transformer model:
+- Uses multi-head attention to focus on relevant features
+- Implements residual connections and layer normalization
+- Provides an alternative to traditional recurrent networks
+- Enabled by default for all new organisms (`use_transformer_models = True`)
+
+#### 📊 RAGAS-Style Automated Evaluation
+Inspired by RAGAS (Retrieval-Augmented Generation Assessment), the system now includes automated quality evaluation with five key metrics:
+
+1. **Health Score (0-100)**: Population balance and energy flow
+2. **Diversity Score (0-100)**: Species variety (Shannon entropy)
+3. **Stability Score (0-100)**: Low population variance = high stability
+4. **Behavioral Quality Score (0-100)**: Reward efficiency and energy management
+5. **Resilience Score (0-100)**: Recovery from disturbances and extinctions
+
+The overall score is a weighted average that provides a comprehensive ecosystem quality assessment.
 
 ---
 
@@ -304,18 +351,23 @@ Herbivores: ⚠️ CRASH LIKELY
 
 This project demonstrates proficiency in:
 - **Python** - Core programming language
-- **PyTorch** - Deep learning framework for LSTM networks
+- **PyTorch** - Deep learning framework for LSTM and Transformer networks
 - **NumPy** - Numerical computing and array operations
 - **Pandas** - Data analysis and time-series logging
 - **Scikit-learn** - ML algorithms (K-means clustering, linear regression)
 - **Pygame** - Real-time visualization and interaction
+- **🆕 FAISS** - Fast similarity search and clustering of dense vectors
+- **🆕 Sentence Transformers** - State-of-the-art text/behavior embeddings (optional)
 
 **Machine Learning Techniques:**
 - LSTM Neural Networks for organism decision-making
+- **🆕 Transformer Models with Multi-Head Attention** for advanced organism decisions
 - REINFORCE (Policy Gradient) for predator hive training
 - K-means Clustering for behavior pattern identification
 - Linear Regression for population crash prediction
+- **🆕 Vector Embeddings** for behavior similarity search
 - Statistical analysis and model evaluation metrics
+- **🆕 RAGAS-style Automated Evaluation** for ecosystem quality assessment
 
 ---
 
