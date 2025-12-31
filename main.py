@@ -1107,7 +1107,7 @@ class EcoLifeSimulation:
                     # Export data to CSV
                     try:
                         csv_path = self.analytics.export_to_csv()
-                        print(f"✅ Data exported successfully!")
+                        print(f"✅ Data exported successfully to {csv_path}!")
                     except Exception as e:
                         print(f"❌ Error exporting data: {e}")
                 elif event.key == pygame.K_t:
