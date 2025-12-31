@@ -133,6 +133,100 @@ class PredatorHive(nn.Module):
 
 
 # -----------------------------
+# Transformer-based decision model with attention
+# -----------------------------
+class TransformerDecisionModel(nn.Module):
+    """
+    Transformer-based decision model using attention mechanism.
+    Can be used as an alternative to LSTM for organism decisions.
+    """
+    
+    def __init__(self, input_size=8, hidden_size=64, output_size=4, num_heads=4, device=None):
+        super().__init__()
+        self.device = device or torch.device("cpu")
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.output_size = output_size
+        
+        # Input projection
+        self.input_proj = nn.Linear(input_size, hidden_size).to(self.device)
+        
+        # Multi-head attention layer
+        self.attention = nn.MultiheadAttention(
+            embed_dim=hidden_size,
+            num_heads=num_heads,
+            batch_first=True
+        ).to(self.device)
+        
+        # Feed-forward network
+        self.ffn = nn.Sequential(
+            nn.Linear(hidden_size, hidden_size * 2),
+            nn.ReLU(),
+            nn.Linear(hidden_size * 2, hidden_size)
+        ).to(self.device)
+        
+        # Output layer
+        self.output = nn.Linear(hidden_size, output_size).to(self.device)
+        
+        # Layer normalization
+        self.norm1 = nn.LayerNorm(hidden_size).to(self.device)
+        self.norm2 = nn.LayerNorm(hidden_size).to(self.device)
+        
+        # Initialize weights
+        for name, p in self.named_parameters():
+            if 'weight' in name:
+                nn.init.xavier_uniform_(p)
+            elif 'bias' in name:
+                nn.init.zeros_(p)
+                
+        self.to(self.device)
+        
+    def forward_np(self, x_np, context=None):
+        """
+        Forward pass for single observation.
+        
+        Args:
+            x_np: numpy array of shape (input_size,)
+            context: optional context observations for attention (not used in simple version)
+            
+        Returns:
+            probs: numpy array of action probabilities
+        """
+        with torch.no_grad():
+            # Convert to tensor
+            x = torch.tensor(x_np, dtype=torch.float32, device=self.device).unsqueeze(0).unsqueeze(0)
+            # x shape: (1, 1, input_size) - batch_size=1, seq_len=1
+            
+            # Project input
+            x = self.input_proj(x)  # (1, 1, hidden_size)
+            
+            # Self-attention (attend to itself - for simple single-step case)
+            attn_out, attn_weights = self.attention(x, x, x)
+            x = self.norm1(x + attn_out)  # Residual connection + layer norm
+            
+            # Feed-forward network
+            ffn_out = self.ffn(x)
+            x = self.norm2(x + ffn_out)  # Residual connection + layer norm
+            
+            # Output layer
+            logits = self.output(x.squeeze(1))  # (1, output_size)
+            probs = F.softmax(logits, dim=-1).cpu().numpy()[0]
+            
+        return probs
+        
+    def clone(self):
+        """Clone the model with same architecture."""
+        new_model = TransformerDecisionModel(
+            input_size=self.input_size,
+            hidden_size=self.hidden_size,
+            output_size=self.output_size,
+            device=self.device
+        )
+        new_model.load_state_dict(copy.deepcopy(self.state_dict()))
+        return new_model
+
+
+# -----------------------------
 # Per-cell LSTM for plants/herbivores (if you want later); not used for predators now
 # (we keep CellLSTM for compatibility)
 # -----------------------------
@@ -225,18 +319,22 @@ class CellType:
 
 
 class Cell:
-    def __init__(self, pos, cell_type, brain=None, qagent=None):
+    def __init__(self, pos, cell_type, brain=None, qagent=None, use_transformer=False):
         self.pos = pos
         self.type = cell_type
         self.energy = 100.0
         self.age = 0
         self.generation = 0
         self.draw_pos = np.array([pos[0], pos[1]], dtype=float)
+        self.use_transformer = use_transformer
 
         if brain is None:
             # only plants/herbivores keep small NN; predators will use hive mostly
             if cell_type in (CellType.PLANT, CellType.HERBIVORE):
-                self.brain = CellLSTM()
+                if use_transformer:
+                    self.brain = TransformerDecisionModel(input_size=8, hidden_size=64, output_size=4)
+                else:
+                    self.brain = CellLSTM()
             else:
                 self.brain = None
         else:
@@ -268,7 +366,8 @@ class Cell:
 
         if hasattr(self, 'brain') and self.brain is not None:
             try:
-                self.brain.reset_state()
+                if hasattr(self.brain, 'reset_state'):
+                    self.brain.reset_state()
             except Exception:
                 pass
 
@@ -358,6 +457,9 @@ class EcoLifeSimulation:
         self.TRAIN_INTERVAL = 20  # train hive every N generations
         self.MIN_EXPERIENCES_TO_TRAIN = 16
 
+        # NEW: Flag to use transformer models for organisms
+        self.use_transformer_models = True  # Enable transformer attention-based decisions
+
         # spawn defaults
         self.spawn_flower_pattern(self.grid_width // 2, self.grid_height // 2)
         self.spawn_predator_swarm(6, 6)
@@ -386,6 +488,9 @@ class EcoLifeSimulation:
         self.analytics = EcosystemAnalytics()
         self.analytics_enabled = True
         self.analytics_log_interval = 5  # Log every N generations
+        
+        # NEW: Auto-report interval (every 20 generations)
+        self.auto_report_interval = 20
 
         # Key bindings shown at start
         self.print_bindings()
@@ -399,7 +504,7 @@ class EcoLifeSimulation:
         print("N     - Spawn nutrient field")
         print("C     - Clear")
         print("R     - Print report")
-        print("A     - Analytics report (ML-powered)")
+        print("A     - Analytics report (ML-powered) - NOW AUTO-GENERATES EVERY 20 GENS")
         print("X     - Export data to CSV")
         print("T     - Toggle predator training ON/OFF (training runs automatically when ON)")
         print("E     - Trigger scarcity event")
@@ -490,20 +595,20 @@ class EcoLifeSimulation:
     # spawn helpers
     def spawn_flower_pattern(self, cx, cy):
         if 0 <= cx < self.grid_width and 0 <= cy < self.grid_height:
-            self.cells[(cx, cy)] = Cell((cx, cy), CellType.PLANT)
+            self.cells[(cx, cy)] = Cell((cx, cy), CellType.PLANT, use_transformer=self.use_transformer_models)
         for angle in range(0, 360, 72):
             rad = math.radians(angle)
             for r in range(1, 4):
                 x = int(cx + math.cos(rad) * r);
                 y = int(cy + math.sin(rad) * r)
                 if 0 <= x < self.grid_width and 0 <= y < self.grid_height and (x, y) not in self.cells:
-                    self.cells[(x, y)] = Cell((x, y), CellType.PLANT)
+                    self.cells[(x, y)] = Cell((x, y), CellType.PLANT, use_transformer=self.use_transformer_models)
         for angle in range(0, 360, 45):
             rad = math.radians(angle)
             x = int(cx + math.cos(rad) * 5);
             y = int(cy + math.sin(rad) * 5)
             if 0 <= x < self.grid_width and 0 <= y < self.grid_height and (x, y) not in self.cells:
-                self.cells[(x, y)] = Cell((x, y), CellType.HERBIVORE)
+                self.cells[(x, y)] = Cell((x, y), CellType.HERBIVORE, use_transformer=self.use_transformer_models)
 
     def spawn_predator_swarm(self, cx, cy, n=6):
         for i in range(n):
@@ -528,7 +633,7 @@ class EcoLifeSimulation:
             y = int(cy + math.sin(rad) * r)
             if 0 <= x < self.grid_width and 0 <= y < self.grid_height and (x, y) not in self.cells:
                 t = random.choice([CellType.PLANT, CellType.HERBIVORE, CellType.PREDATOR])
-                self.cells[(x, y)] = Cell((x, y), t)
+                self.cells[(x, y)] = Cell((x, y), t, use_transformer=self.use_transformer_models)
 
     def get_neighbors(self, pos):
         x, y = pos
@@ -663,7 +768,7 @@ class EcoLifeSimulation:
                     x = cx + random.randint(-1, 1)
                     y = cy + random.randint(-1, 1)
                     if 0 <= x < self.grid_width and 0 <= y < self.grid_height and (x, y) not in self.cells:
-                        self.cells[(x, y)] = Cell((x, y), CellType.HERBIVORE)
+                        self.cells[(x, y)] = Cell((x, y), CellType.HERBIVORE, use_transformer=self.use_transformer_models)
                         # Ensure the new herbivore has a brain if required by the Cell class,
                         # though Cell() defaults should handle it.
 
@@ -678,7 +783,7 @@ class EcoLifeSimulation:
                 cx = random.randint(5, self.grid_width - 6)
                 cy = random.randint(5, self.grid_height - 6)
                 # Spawn 1 predator
-                self.cells[(cx, cy)] = Cell((cx, cy), CellType.PREDATOR)
+                self.cells[(cx, cy)] = Cell((cx, cy), CellType.PREDATOR, use_transformer=self.use_transformer_models)
                 print(f"**🦁 Predators Reintroduced at Gen {self.generation}**")
 
     def update_ecosystem(self):
@@ -745,7 +850,7 @@ class EcoLifeSimulation:
                     if empty:
                         chosen = random.choice(empty)
                         # child inherits nothing from hive (hive is shared). just reproduce clone of cell brain if any.
-                        child = Cell(chosen, CellType.PREDATOR)
+                        child = Cell(chosen, CellType.PREDATOR, use_transformer=self.use_transformer_models)
                         child.generation = cell.generation + 1
                         to_add.append((chosen, child))
                         cell.energy *= 0.5
@@ -851,7 +956,7 @@ class EcoLifeSimulation:
                                 for p in child_brain.parameters():
                                     if random.random() < 0.02:
                                         p.data += torch.randn_like(p.data) * 0.01
-                            child = Cell(chosen, CellType.HERBIVORE, brain=child_brain)
+                            child = Cell(chosen, CellType.HERBIVORE, brain=child_brain, use_transformer=self.use_transformer_models)
                             child.generation = cell.generation + 1
                             to_add.append((chosen, child))
                             cell.energy *= 0.5
@@ -895,7 +1000,7 @@ class EcoLifeSimulation:
                     empty = [n for n in self.get_neighbors(pos) if n not in new_cells and n not in to_remove]
                     if empty:
                         newp = random.choice(empty)
-                        to_add.append((newp, Cell(newp, CellType.PLANT)))
+                        to_add.append((newp, Cell(newp, CellType.PLANT, use_transformer=self.use_transformer_models)))
                         cell.energy *= 0.5  # Energy cost of reproduction
                         self.stats['total_births'] += 1
                         current_plant_count += 1  # Increment counter
@@ -977,6 +1082,13 @@ class EcoLifeSimulation:
                 diversity,
                 len(self.hive_experiences)
             )
+        
+        # NEW: Auto-generate analytics report every 20 generations
+        if self.analytics_enabled and self.generation % self.auto_report_interval == 0 and self.generation > 0:
+            print("\n" + "="*80)
+            print(f"AUTO-GENERATED ANALYTICS REPORT (Generation {self.generation})")
+            print("="*80)
+            print("\n" + self.analytics.generate_report())
 
     def species_diversity_score(self):
         counts = defaultdict(int)
