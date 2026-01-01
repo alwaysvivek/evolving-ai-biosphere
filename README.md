@@ -31,27 +31,7 @@ A self-evolving digital ecosystem where AI organisms fight for survival, powered
 | **Inference** | Ollama | Local LLM serving (Llama 3.2) for God Mode control. |
 | **Observability** | MLflow | Real-time experiment tracking and metric logging (Port 5001). |
 
-```mermaid
-graph LR
-    subgraph "Core Simulation"
-    Pygame["Pygame"] --> Render["Rendering (60 FPS)"]
-    Pygame --> Input["Input & Hotkeys"]
-    NumPy["NumPy"] --> Physics["Scent Diffusion & Tensors"]
-    NumPy --> State["Grid State Management"]
-    end
 
-    subgraph "Artificial Intelligence"
-    PyTorch["PyTorch"] --> LSTM["Predator Hive Mind (LSTM)"]
-    PyTorch --> Grad["Policy Gradient (REINFORCE)"]
-    LangChain["LangChain / LangGraph"] --> Agent["God Mode Agent Control"]
-    Ollama["Ollama"] --> LLM["Llama 3.2 Inference"]
-    end
-
-    subgraph "DevOps & MLOps"
-    MLflow["MLflow"] --> Metrics["Live Experiment Tracking"]
-    Subprocess["Subprocess"] --> Orch["Service Orchestration"]
-    end
-```
 
 ---
 
@@ -59,26 +39,33 @@ graph LR
 
 ```mermaid
 graph TD
-    User[User] -->|Run| Launcher[launch_services.py]
-    Launcher -->|Spawns| Ollama["Ollama Service<br/>(Port 11434)"]
-    Launcher -->|Spawns| MLflow["MLflow UI<br/>(Port 5001)"]
-    
-    User -->|Run| Sim[simulation.py]
-    
-    subgraph Ecosystem
-        Sim -->|Updates| Grid["Game Grid (Pygame)"]
-        Sim -->|Queries| GodMode["God Mode Agent"]
-        GodMode -.->|API Call| Ollama
+    subgraph "Orchestration Layer (Python Subprocess)"
+        Launcher[launch_services.py] -->|Spawns| OllamaService["Ollama Service<br/>(Llama 3.2 Inference)"]
+        Launcher -->|Spawns| MLflowService["MLflow Service<br/>(Experiment Tracking)"]
     end
-    
-    subgraph Agents
-        Predators["Predator Hive<br/>(Shared LSTM Brain)"]
-        Herbivores["Herbivore Agents<br/>(Individual Genomes)"]
+
+    subgraph "Simulation Layer (Pygame & NumPy)"
+        User[User Input] -->|Control| Sim[simulation.py]
+        Sim -->|Updates| Grid["Entity Grid<br/>(State Management)"]
+        
+        subgraph "Bio-Agents"
+            Predators["Predator Hive Mind<br/>(PyTorch LSTM + REINFORCE)"]
+            Herbivores["Herbivore Agents<br/>(Genetic Algorithm)"]
+        end
+        
+        Grid -->|Sensory Data| Predators
+        Grid -->|Local View| Herbivores
+        Predators -->|Action| Grid
+        Herbivores -->|Action| Grid
     end
-    
-    Predators -->|Action| Grid
-    Herbivores -->|Action| Grid
-    Sim -->|Logs Metrics| MLflow
+
+    subgraph "Intelligence Layer (LangChain & LangGraph)"
+        Sim -->|Natural Language| GodMode["God Mode Agent<br/>(Tool Calling)"]
+        GodMode -.->|API| OllamaService
+        GodMode -.->|Debate| Council["Council System<br/>(Multi-Agent Debate)"]
+    end
+
+    Sim -->|Logs Metrics| MLflowService
 ```
 
 ---
