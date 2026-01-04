@@ -39,33 +39,60 @@ A self-evolving digital ecosystem where AI organisms fight for survival, powered
 
 ```mermaid
 graph TD
-    subgraph "Orchestration Layer (Python Subprocess)"
-        Launcher[launch_services.py] -->|Spawns| OllamaService["Ollama Service<br/>(Llama 3.2 Inference)"]
-        Launcher -->|Spawns| MLflowService["MLflow Service<br/>(Experiment Tracking)"]
-    end
+    %% Styling
+    classDef infra fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef sim fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef ai fill:#bfb,stroke:#333,stroke-width:2px;
 
-    subgraph "Simulation Layer (Pygame & NumPy)"
-        User[User Input] -->|Control| Sim[simulation.py]
-        Sim -->|Updates| Grid["Entity Grid<br/>(State Management)"]
+    %% --- Infrastructure Layer ---
+    subgraph "Layer 1: Infrastructure & Orchestration"
+        Launcher[launch_services.py]:::infra
         
-        subgraph "Bio-Agents"
-            Predators["Predator Hive Mind<br/>(PyTorch LSTM + REINFORCE)"]
-            Herbivores["Herbivore Agents<br/>(Genetic Algorithm)"]
+        subgraph Services
+            OllamaService["Ollama Service<br/>(Llama 3.2 Inference)"]:::infra
+            MLflowService["MLflow Service<br/>(Experiment Tracking)"]:::infra
         end
         
-        Grid -->|Sensory Data| Predators
-        Grid -->|Local View| Herbivores
-        Predators -->|Action| Grid
-        Herbivores -->|Action| Grid
+        Launcher -->|Spawns| OllamaService
+        Launcher -->|Spawns| MLflowService
     end
 
-    subgraph "Intelligence Layer (LangChain & LangGraph)"
-        Sim -->|Natural Language| GodMode["God Mode Agent<br/>(Tool Calling)"]
-        GodMode -.->|API| OllamaService
-        GodMode -.->|Debate| Council["Council System<br/>(Multi-Agent Debate)"]
+    %% --- Simulation Core ---
+    subgraph "Layer 2: Simulation Core (Pygame)"
+        User[User Input] -->|Control| Sim[simulation.py]:::sim
+        Sim -->|Updates 60hz| Grid["Entity Grid State<br/>(NumPy)"]:::sim
+        
+        User -->|Metric View| MLflowService
     end
 
-    Sim -->|Logs Metrics| MLflowService
+    %% --- Intelligence & Agents ---
+    subgraph "Layer 3: Artificial Intelligence"
+        direction TB
+        
+        subgraph "Bio-Agents (Inside Grid)"
+            Predators["Predator Hive Mind<br/>(PyTorch LSTM + REINFORCE)"]:::ai
+            Herbivores["Herbivore Agents<br/>(Genetic Algorithm)"]:::ai
+        end
+
+        subgraph "God Mode (LangChain/LangGraph)"
+            GodMode["God Mode Agent"]:::ai
+            Council["Council System<br/>(Multi-Agent Debate)"]:::ai
+        end
+    end
+
+    %% Connections
+    Sim -- Log Data --> MLflowService
+    Sim -- Natural Language --> GodMode
+    
+    Grid -- Sensory Data --> Predators
+    Grid -- Local View --> Herbivores
+    
+    Predators -- Action --> Grid
+    Herbivores -- Action --> Grid
+    
+    GodMode -.->|API Call| OllamaService
+    GodMode -- Summon --> Council
+    Council -.->|Debate| OllamaService
 ```
 
 ---
