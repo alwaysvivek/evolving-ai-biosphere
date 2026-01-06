@@ -38,61 +38,61 @@ A self-evolving digital ecosystem where AI organisms fight for survival, powered
 ## 🧩 Architecture
 
 ```mermaid
-graph TD
+graph LR
     %% Styling
     classDef infra fill:#f9f,stroke:#333,stroke-width:2px;
-    classDef sim fill:#bbf,stroke:#333,stroke-width:2px;
-    classDef ai fill:#bfb,stroke:#333,stroke-width:2px;
+    classDef core fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef brain fill:#bfb,stroke:#333,stroke-width:2px;
 
-    %% --- Infrastructure Layer ---
-    subgraph "Layer 1: Infrastructure & Orchestration"
-        Launcher[launch_services.py]:::infra
-        
-        subgraph Services
-            OllamaService["Ollama Service<br/>(Llama 3.2 Inference)"]:::infra
-            MLflowService["MLflow Service<br/>(Experiment Tracking)"]:::infra
-        end
-        
-        Launcher -->|Spawns| OllamaService
-        Launcher -->|Spawns| MLflowService
-    end
-
-    %% --- Simulation Core ---
-    subgraph "Layer 2: Simulation Core (Pygame)"
-        User[User Input] -->|Control| Sim[simulation.py]:::sim
-        Sim -->|Updates 60hz| Grid["Entity Grid State<br/>(NumPy)"]:::sim
-        
-        User -->|Metric View| MLflowService
-    end
-
-    %% --- Intelligence & Agents ---
-    subgraph "Layer 3: Artificial Intelligence"
+    %% --- Infrastructure (Left Column) ---
+    subgraph Infrastructure
         direction TB
+        Launch[launch_services.py]:::infra
+        Ollama[Ollama Service<br/>(Llama 3.2)]:::infra
+        MLflow[MLflow Server<br/>(Metrics)]:::infra
         
-        subgraph "Bio-Agents (Inside Grid)"
-            Predators["Predator Hive Mind<br/>(PyTorch LSTM + REINFORCE)"]:::ai
-            Herbivores["Herbivore Agents<br/>(Genetic Algorithm)"]:::ai
-        end
-
-        subgraph "God Mode (LangChain/LangGraph)"
-            GodMode["God Mode Agent"]:::ai
-            Council["Council System<br/>(Multi-Agent Debate)"]:::ai
-        end
+        Launch -.->|Starts| Ollama
+        Launch -.->|Starts| MLflow
     end
 
-    %% Connections
-    Sim -- Log Data --> MLflowService
-    Sim -- Natural Language --> GodMode
+    %% --- Simulation (Middle Column) ---
+    subgraph "Simulation Loop (60hz)"
+        direction TB
+        User[User Input]
+        Pygame[Pygame Engine]:::core
+        Grid[NumPy Grid State]:::core
+        
+        User ==>|Controls| Pygame
+        Pygame ==>|Updates| Grid
+    end
+
+    %% --- Intelligence (Right Column) ---
+    subgraph "The Hive & Agents"
+        direction TB
+        Preds[Predator Hive Mind<br/>(PyTorch LSTM)]:::brain
+        Herbs[Herbivores<br/>(Genetics)]:::brain
+        
+        God[God Mode Agent<br/>(LangChain)]:::brain
+        Council[Council System<br/>(LangGraph)]:::brain
+    end
+
+    %% --- Connections (Critical Paths) ---
     
-    Grid -- Sensory Data --> Predators
-    Grid -- Local View --> Herbivores
+    %% Bio-Loop
+    Grid <==>|Sensors/Action| Preds
+    Grid <==>|Sensors/Action| Herbs
     
-    Predators -- Action --> Grid
-    Herbivores -- Action --> Grid
+    %% God Mode Loop
+    Pygame -.->|Chat| God
+    God <==>|Tools| Pygame
+    God -.->|Inference| Ollama
     
-    GodMode -.->|API Call| OllamaService
-    GodMode -- Summon --> Council
-    Council -.->|Debate| OllamaService
+    %% Council Loop
+    God -- Summon --> Council
+    Council -.->|Debate| Ollama
+    
+    %% Logging
+    Pygame -- Log Data --> MLflow
 ```
 
 ---
