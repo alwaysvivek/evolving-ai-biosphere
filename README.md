@@ -48,8 +48,8 @@ graph LR
     subgraph Infrastructure
         direction TB
         Launch[launch_services.py]:::infra
-        Ollama[Ollama Service<br/>(Llama 3.2)]:::infra
-        MLflow[MLflow Server<br/>(Metrics)]:::infra
+        Ollama["Ollama Service<br/>(Llama 3.2)"]:::infra
+        MLflow["MLflow Server<br/>(Metrics)"]:::infra
         
         Launch -.->|Starts| Ollama
         Launch -.->|Starts| MLflow
@@ -69,11 +69,11 @@ graph LR
     %% --- Intelligence (Right Column) ---
     subgraph "The Hive & Agents"
         direction TB
-        Preds[Predator Hive Mind<br/>(PyTorch LSTM)]:::brain
-        Herbs[Herbivores<br/>(Genetics)]:::brain
+        Preds["Predator Hive Mind<br/>(PyTorch LSTM)"]:::brain
+        Herbs["Herbivores<br/>(Genetics)"]:::brain
         
-        God[God Mode Agent<br/>(LangChain)]:::brain
-        Council[Council System<br/>(LangGraph)]:::brain
+        God["God Mode Agent<br/>(LangChain)"]:::brain
+        Council["Council System<br/>(LangGraph)"]:::brain
     end
 
     %% --- Connections (Critical Paths) ---
