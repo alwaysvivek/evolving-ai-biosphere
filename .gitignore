@@ -205,3 +205,8 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Generated Project Files
+dump.rdb
+analytics_output/
+mlruns/
