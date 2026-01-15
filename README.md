@@ -129,8 +129,7 @@ This script starts **MLflow** (logging) and checks for **Ollama** (AI Brain).
 ```bash
 python3 launch_services.py
 ```
-*Wait until you see: `âœ
- MLflow UI started at http://127.0.0.1:5001`*
+*Wait until you see: `âœ… MLflow UI started at http://127.0.0.1:5001`*
 
 ### Step 2: Run the Simulation
 Open a **new terminal tab/window**, activate the environment, and run:

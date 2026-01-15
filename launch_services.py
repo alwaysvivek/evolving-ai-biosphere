@@ -40,8 +40,7 @@ def start_ollama():
     
     # Check if port 11434 is in use (Ollama default)
     if is_port_in_use(11434):
-        log("Ollama is already running (Port 11434 active).", "âœ
-", GREEN)
+        log("Ollama is already running (Port 11434 active).", "âœ…", GREEN)
         return None
     
     log("Starting Ollama serve...", "ðŸš€", YELLOW)
@@ -55,8 +54,7 @@ def start_ollama():
         # Wait for it to come up
         for _ in range(10):
             if is_port_in_use(11434):
-                log("Ollama started successfully.", "âœ
-", GREEN)
+                log("Ollama started successfully.", "âœ…", GREEN)
                 return proc
             time.sleep(1)
             
@@ -70,8 +68,7 @@ def start_mlflow():
     log("Checking MLflow UI...", "ðŸ“Š", CYAN)
     
     if is_port_in_use(5001):
-        log("MLflow is likely already running (Port 5001 active).", "âœ
-", GREEN)
+        log("MLflow is likely already running (Port 5001 active).", "âœ…", GREEN)
         return None
 
     log("Starting MLflow UI on Port 5001...", "ðŸš€", YELLOW)
@@ -94,14 +91,12 @@ def start_mlflow():
         # Wait for port
         for _ in range(10):
             if is_port_in_use(5001):
-                log("MLflow UI started at http://127.0.0.1:5001", "âœ
-", GREEN)
+                log("MLflow UI started at http://127.0.0.1:5001", "âœ…", GREEN)
                 webbrowser.open("http://127.0.0.1:5001")
                 return proc
             time.sleep(1)
 
-        log("MLflow started (background).", "âœ
-", GREEN)
+        log("MLflow started (background).", "âœ…", GREEN)
         webbrowser.open("http://127.0.0.1:5001")
         return proc
     except Exception as e:
@@ -113,8 +108,7 @@ def setup_env():
     if not os.path.exists("venv"):
         log("Creating virtual environment...", "ðŸ“¦", YELLOW)
     else:
-        log("Virtual environment found.", "âœ
-", GREEN)
+        log("Virtual environment found.", "âœ…", GREEN)
 
     # We reuse the shell script for consistency, but we could do it in python too.
     # subprocess.run(["bash", "setup_env.sh"], check=True) 
