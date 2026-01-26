@@ -5,6 +5,8 @@ A self-evolving digital ecosystem where AI organisms fight for survival, powered
 ![Status](https://img.shields.io/badge/Status-Active-success)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Tech](https://img.shields.io/badge/ML-PyTorch%20%7C%20Ollama%20%7C%20MLflow-orange)
+<br><br>
+[![Deploy static content to Pages](https://github.com/alwaysvivek/evolving-ai-biosphere/actions/workflows/static.yml/badge.svg)](https://github.com/alwaysvivek/evolving-ai-biosphere/actions/workflows/static.yml)
 
 ## 📖 Overview
 
